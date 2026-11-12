@@ -1,0 +1,17 @@
+{
+  "map": "docs/mapa.html",
+  "language": "pt",
+  "planFiles": ["PLAN.md"],
+  "progressFiles": ["CHANGELOG.md"],
+  "worktree": {
+    "create": "git worktree add ../{repo}-{branch} -b {branch} origin/main",
+    "path": "../{repo}-{branch}",
+    "remove": "git worktree remove ../{repo}-{branch} && git branch -D {branch}"
+  },
+  "parallel": { "max": 4, "maxHeavy": 2, "heavyHint": "tasks that start a server, a database or a browser" },
+  "mergeWaitSeconds": 120,
+  "mergeCommand": "gh pr merge {pr} --merge",
+  "afterMerge": ["git pull"],
+  "subagentNotes": "",
+  "reviewer": "Codex"
+}

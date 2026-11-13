@@ -12,6 +12,8 @@
 //        selection = topic id or part of its title | range "A1..A9" | task ids "A1 A3".
 //   identify <prompt-file>          Find the task whose prompt matches the pasted text.
 //   check <id> [id...]              Exit 0 when every id is done (feita) or no longer in the map.
+//   finished <task-id>              Exit 0 when every task of that task's topic is done; tells whether
+//                                   the topic already has its revisao (review prompts).
 //
 // Map location (first that exists): --map <file>, env MAPA_FILE, "map" in .claude/mapa.json
 // (searched from the current folder upwards; relative paths are relative to the project root).
@@ -314,6 +316,18 @@ function check(ids) {
   process.exit(pend.length ? 1 : 0);
 }
 
+function finished(id) {
+  if (!id) erro('usage: finished <task-id>');
+  const { porId } = carregar();
+  const achada = porId.get(id);
+  if (!achada) { console.log(`NOT FOUND: task ${id} is not in the map (topic already removed?)`); process.exit(1); }
+  const a = achada.assunto;
+  const faltam = (a.tarefas || []).filter((t) => t.feita !== true).map((t) => t.id);
+  if (faltam.length) { console.log(`PENDING: topic ${a.id} (${a.titulo}) still has ${faltam.join(', ')}`); process.exit(1); }
+  const rev = Array.isArray(a.revisao) && a.revisao.length;
+  console.log(`FINISHED: topic ${a.id} (${a.titulo}); revisao ${rev ? `ALREADY FILLED (${a.revisao.length})` : 'EMPTY'}${a.revisado ? `; reviewed ${a.revisado}` : ''}${a.pausa ? `; paused: ${a.pausa}` : ''}`);
+}
+
 const [comando, ...resto] = pos;
 switch (comando) {
   case 'init': init(resto[0]); break;
@@ -322,5 +336,6 @@ switch (comando) {
   case 'tasks': tasks(resto[0], resto.slice(1)); break;
   case 'identify': identify(resto[0]); break;
   case 'check': check(resto); break;
-  default: erro('commands: init | summary | validate | tasks | identify | check (see the header of mapa.mjs)');
+  case 'finished': finished(resto[0]); break;
+  default: erro('commands: init | summary | validate | tasks | identify | check | finished (see the header of mapa.mjs)');
 }

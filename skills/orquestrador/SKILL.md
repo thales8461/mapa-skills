@@ -79,7 +79,7 @@ For each ready PR:
 
 ## Step 8: end
 - Nothing left running: list the "merge at the end" PRs in dependency order and ask once (no timeout). Merge the approved ones with step 7.
-- A topic finished completely: add the `revisao` prompts to it in the map (`mapa` skill).
+- A topic finished completely: `prompt-revisao` skill (writes the topic's `revisao`).
 - Final summary: merged, still open, unanswered questions, warnings.
 
 ## Long runs and usage limits

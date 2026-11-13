@@ -13,5 +13,6 @@
   "mergeCommand": "gh pr merge {pr} --merge",
   "afterMerge": ["git pull"],
   "subagentNotes": "",
-  "reviewer": "Codex"
+  "reviewer": "Codex",
+  "reviews": { "folder": "docs/reviews", "fixPrefix": "K", "sensitiveReviewer": "" }
 }

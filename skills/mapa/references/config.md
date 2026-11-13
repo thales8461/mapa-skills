@@ -18,7 +18,18 @@ Optional file in the project root. All keys are optional except `map`. The skill
   "mergeCommand": "gh pr merge {pr} --merge",
   "afterMerge": ["git pull"],
   "subagentNotes": "",
-  "reviewer": "Codex"
+  "reviewer": "Codex",
+  "reviews": {
+    "folder": "docs/reviews",
+    "inProgress": "docs/reviews/in-progress",
+    "done": "docs/reviews/done",
+    "tracking": "docs/reviews/TRACKING.md",
+    "fixPrefix": "K",
+    "sensitiveReviewer": "",
+    "sensitiveAreas": ["login", "session", "2FA", "permissions and roles", "row-level security", "data deletion"],
+    "promptTail": [],
+    "cleanup": []
+  }
 }
 ```
 
@@ -35,4 +46,11 @@ Optional file in the project root. All keys are optional except `map`. The skill
 | `mergeCommand` | orquestrador | Merge command with `{pr}`. |
 | `afterMerge` | orquestrador | Commands to run in the main folder after each merge. |
 | `subagentNotes` | orquestrador | Extra text added to every subagent brief (ports, test database, local rules). |
-| `reviewer` | mapa | Name shown for the final review of a finished topic. |
+| `reviewer` | mapa, prompt-revisao | Name shown for the final review of a finished topic; the reviewer of the review prompt. |
+| `reviews.folder` / `inProgress` / `done` | revisao, prompt-revisao | Review report folders: inbox (not triaged), triaged with open fixes, nothing left to fix. |
+| `reviews.tracking` | revisao | Markdown file with one section per report and the status of each finding. |
+| `reviews.fixPrefix` | revisao | Prefix of the fix task ids (default `K`). |
+| `reviews.sensitiveReviewer` | prompt-revisao | Second reviewer only for the sensitive part (empty = one prompt). |
+| `reviews.sensitiveAreas` | prompt-revisao | What counts as sensitive. |
+| `reviews.promptTail` | prompt-revisao | Names of map constants appended to every review prompt (e.g. `["REVIEW_RULES"]`); empty = the default rules are written in the text. |
+| `reviews.cleanup` | revisao | Commands run when a report goes to done (`{report}` = file name). |

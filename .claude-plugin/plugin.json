@@ -1,7 +1,7 @@
 {
   "name": "mapa",
-  "version": "1.0.0",
-  "description": "Project map (HTML roadmap of plans, tasks, prompts and dependencies) plus skills to queue tasks, plan from screenshots and orchestrate many tasks with subagents.",
+  "version": "1.1.0",
+  "description": "Project map (HTML roadmap of plans, tasks, prompts and dependencies) plus skills to queue tasks, plan from screenshots, orchestrate many tasks with subagents, write the final review prompts and triage the review reports.",
   "author": { "name": "thales8461", "url": "https://github.com/thales8461" },
   "keywords": ["roadmap", "planning", "orchestration", "subagents", "worktree", "queue"]
 }

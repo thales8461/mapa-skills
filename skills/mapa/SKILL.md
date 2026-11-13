@@ -35,7 +35,7 @@ Edit only the field you own, after re-reading the lines:
 | Non-Claude agent opens a PR | `pr: <number>` |
 | PR merged (confirmed `MERGED`) | `feita: true`; remove `trabalhando`, `pr`, `fila` |
 | Topic blocked by something external | `pausa: '<reason>'` on the topic |
-| Last task of a topic merged | `revisao: [<review prompts>]` on the topic |
+| Last task of a topic merged | `revisao: [<review prompts>]` on the topic (`prompt-revisao` skill) |
 | Final review done | `revisado: '<date>'` on the topic |
 
 Update `atualizado` on every change except `fila`.

@@ -2,14 +2,17 @@
 
 [English](README.en.md)
 
-Quatro skills para o Claude Code que organizam projetos em etapas pequenas (uma PR por tarefa) e deixam o Claude rodar várias tarefas sozinho.
+Sete skills para o Claude Code que organizam projetos em etapas pequenas (uma PR por tarefa) e deixam o Claude rodar várias tarefas sozinho.
 
 | Skill | Para quê |
 |---|---|
 | `/mapa` | Cria e mantém o **mapa** do projeto: um HTML com cada plano (assunto) dividido em tarefas, com o prompt pronto para copiar, a IA, o modelo, o esforço, o gasto estimado e as dependências. |
 | `/fila` | Você cola o prompt de uma tarefa e a sessão **espera** as dependências ficarem feitas no mapa antes de começar. |
+| `/pos` | `/pos A1` + o prompt da A2: a A2 só começa depois que a A1 for **mesclada**, mesmo sem depender dela (para rodar em sequência tarefas que poderiam ir em paralelo). |
 | `/planejamento` | Você manda vários prints e pedidos; o Claude **só anota** até você dizer que terminou, e aí planeja, perguntando o que não estiver claro. |
 | `/orquestrador` | A sessão vira **orquestradora**: roda um assunto inteiro ou um intervalo de tarefas (`A10..A20`) com subagentes (Opus, Sonnet, Haiku), respeitando as dependências, em paralelo quando dá, consultando o Fable nas dúvidas e perguntando antes de mesclar. |
+| `prompt-revisao` | Chamada **sozinha** quando a última tarefa de um assunto é mesclada: grava no mapa o prompt da revisão final para outro modelo (Gemini, Codex...), com uma parte separada para a área sensível, se houver. |
+| `/revisao` | Lê os **relatórios de revisão** ainda não tratados, confere cada achado na `main`, propõe as tarefas de correção (com a sua aprovação vão para o mapa) e manda para a pasta de concluídos o que não tem nada a corrigir. |
 
 ![Mapa](docs/mapa.png)
 
@@ -24,7 +27,7 @@ Requisitos: [Claude Code](https://claude.com/claude-code), Node.js 18+, git. O `
 /plugin install mapa@mapa-skills
 ```
 
-**Como skills soltas** (os comandos ficam `/mapa`, `/fila`...): copie as quatro pastas de `skills/` para `~/.claude/skills/`. Mantenha as quatro juntas: `fila` e `orquestrador` usam o script da pasta `mapa`.
+**Como skills soltas** (os comandos ficam `/mapa`, `/fila`...): copie as sete pastas de `skills/` para `~/.claude/skills/`. Mantenha todas juntas: `fila`, `pos`, `orquestrador`, `prompt-revisao` e `revisao` usam o script da pasta `mapa`.
 
 ## Começar
 

@@ -2,12 +2,13 @@
 
 [Português](README.md)
 
-Six Claude Code skills that organize a project in small steps (one pull request per task) and let Claude run many tasks on its own.
+Seven Claude Code skills that organize a project in small steps (one pull request per task) and let Claude run many tasks on its own.
 
 | Skill | What for |
 |---|---|
 | `/mapa` | Creates and keeps the project **map**: one HTML file with each plan (topic) split into tasks, each with a ready-to-copy prompt, the AI, the model, the effort, the estimated cost and its dependencies. |
 | `/fila` | You paste a task prompt and the session **waits** until its dependencies are done in the map before starting. |
+| `/pos` | `/pos A1` + the A2 prompt: A2 starts only after A1 is **merged**, even without depending on it (to run in sequence tasks that could run in parallel). |
 | `/planejamento` | You send many screenshots and change requests; Claude **only takes notes** until you say you are done, then plans, asking about anything unclear. |
 | `/orquestrador` | The session becomes the **orchestrator**: it runs a whole topic or a range of tasks (`A10..A20`) with subagents (Opus, Sonnet, Haiku), following the dependencies, in parallel when possible, consulting Fable when unsure and asking before each merge. |
 | `prompt-revisao` | Runs **on its own** when the last task of a topic is merged: writes in the map the final review prompt for another model (Gemini, Codex...), with a separate part for the sensitive area, if any. |
@@ -26,7 +27,7 @@ Requirements: [Claude Code](https://claude.com/claude-code), Node.js 18+, git. `
 /plugin install mapa@mapa-skills
 ```
 
-**As loose skills** (commands stay `/mapa`, `/fila`...): copy the six folders under `skills/` to `~/.claude/skills/`. Keep them together: `fila`, `orquestrador`, `prompt-revisao` and `revisao` use the script in the `mapa` folder.
+**As loose skills** (commands stay `/mapa`, `/fila`...): copy the seven folders under `skills/` to `~/.claude/skills/`. Keep them together: `fila`, `pos`, `orquestrador`, `prompt-revisao` and `revisao` use the script in the `mapa` folder.
 
 The skill instructions are in English; Claude replies in your language. Field names inside the map data are in Portuguese (glossary in [`schema.md`](skills/mapa/references/schema.md)).
 

@@ -1,7 +1,7 @@
 {
   "$schema": "https://anthropic.com/claude-code/marketplace.schema.json",
   "name": "mapa-skills",
-  "description": "Project map and workflow skills for Claude Code: mapa, fila, planejamento, orquestrador, prompt-revisao, revisao.",
+  "description": "Project map and workflow skills for Claude Code: mapa, fila, pos, planejamento, orquestrador, prompt-revisao, revisao.",
   "owner": { "name": "thales8461", "url": "https://github.com/thales8461" },
   "plugins": [
     { "name": "mapa", "description": "Project map plus queue, planning and orchestration skills.", "source": "./", "category": "productivity" }

@@ -5,7 +5,7 @@
 // Commands:
 //   init <file> [--name <project>] [--lang pt|en] [--reviewer <name>] [--empty]
 //        Create a new map from the template. Refuses to overwrite.
-//   summary                         Topics with group and progress.
+//   summary                         Topics with group and progress, and the bell (what waits for the user).
 //   validate                        Check ids, dependencies, cycles and required fields.
 //   tasks <out-dir> <selection...>  Write <id>.txt with the Claude prompt of each selected task
 //                                   and print JSON with the pending tasks and the waves.
@@ -163,6 +163,9 @@ function summary() {
     console.log(`${a.id} | ${grupoDe(a)} | ${feitas}/${t.length} | ${a.titulo}` +
       (trab.length ? ` | working: ${trab.join(' ')}` : '') + (a.revisado ? ` | reviewed ${a.revisado}` : '') + (a.pausa ? ` | paused: ${a.pausa}` : ''));
   }
+  const apr = dados.aprovacoes || [];
+  console.log(`BELL: ${apr.length} waiting for the user`);
+  for (const i of apr) console.log(`  ${i.id || '?'} | ${i.titulo || '?'}${i.tarefa ? ` | ${i.tarefa}` : ''}${i.desde ? ` | since ${i.desde}` : ''}`);
 }
 
 function validate() {
@@ -187,6 +190,14 @@ function validate() {
       }
       if (t.feita && (t.trabalhando || t.pr || t.fila)) problemas.push(`${t.id}: feita together with trabalhando/pr/fila`);
     }
+  }
+  // bell
+  const idsSino = new Set();
+  for (const i of dados.aprovacoes || []) {
+    if (!i.id || !i.titulo) problemas.push(`aprovacoes item without id or titulo: ${i.id || i.titulo || '?'}`);
+    if (idsSino.has(i.id)) problemas.push(`repeated aprovacoes id: ${i.id}`);
+    idsSino.add(i.id);
+    if (i.tarefa && porId.get(i.tarefa)?.tarefa.feita) avisos.push(`aprovacoes ${i.id}: task ${i.tarefa} is already done (remove the item)`);
   }
   // cycles
   const estado = new Map();

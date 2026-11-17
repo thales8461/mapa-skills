@@ -24,6 +24,8 @@
     if (document.hidden) return;
     const m = document.getElementById('menu-lista');
     if (m && !m.hidden) return;
+    const sn = document.getElementById('sino-lista');
+    if (sn && !sn.hidden) return;
     const a = document.activeElement;
     if (a && /^(INPUT|TEXTAREA|SELECT)$/.test(a.tagName)) return;
     const sel = window.getSelection && window.getSelection().toString();
@@ -47,6 +49,9 @@ const DADOS = {
   revisor: 'Codex',           // who runs the final review of a finished assunto
   caminho: '',                // absolute path of this file (goes into the copied prompts)
   atualizado: '2026-01-01',
+  // Bell: what waits for the user's approval or answer. Agents add and remove items
+  // ({ id, titulo, detalhe, desde: 'dd/mm hh:mm', tarefa?, link? }); see the sino skill.
+  aprovacoes: [],
   fixos: [],
   assuntos: [
     {
@@ -205,6 +210,25 @@ const DADOS = {
   .auto-linha label { display: flex; align-items: center; justify-content: space-between; gap: 12px; font-size: .84rem; color: var(--texto); margin-bottom: 8px; }
   .auto-linha input[type=range] { width: 100%; accent-color: var(--primaria, #6366f1); cursor: pointer; }
   .menu-lista .estado { font-size: .74rem; font-weight: 600; color: var(--suave); }
+  .sino { position: relative; }
+  .sino-btn { position: relative; width: 36px; height: 36px; border-radius: 12px; border: 1px solid var(--vidro-borda); background: var(--vidro); color: var(--texto); cursor: pointer; display: grid; place-items: center; transition: box-shadow .3s; }
+  .sino-btn:hover, .sino-btn[aria-expanded="true"] { box-shadow: 0 0 16px var(--neon1); }
+  .sino-btn svg { width: 18px; height: 18px; }
+  .sino-btn .conta { position: absolute; top: -6px; right: -6px; min-width: 18px; height: 18px; padding: 0 5px; border-radius: 9px; background: #e5484d; color: #fff; font-size: .7rem; font-weight: 700; display: grid; place-items: center; }
+  .sino-btn .conta[hidden] { display: none; }
+  .sino-btn.tem svg { animation: toque 2.4s ease-in-out infinite; transform-origin: 50% 10%; }
+  @keyframes toque { 0%, 70%, 100% { transform: rotate(0); } 75% { transform: rotate(14deg); } 80% { transform: rotate(-12deg); } 85% { transform: rotate(8deg); } 90% { transform: rotate(-4deg); } }
+  [data-animacoes="off"] .sino-btn.tem svg { animation: none; }
+  .sino-lista { position: absolute; top: calc(100% + 6px); right: 0; z-index: 30; width: min(380px, 88vw); max-height: 70vh; overflow: auto; padding: 6px; border-radius: 14px; background: var(--bg2); border: 1px solid var(--vidro-borda); box-shadow: var(--sombra); }
+  .sino-lista[hidden] { display: none; }
+  .sino-lista h3 { margin: 6px 10px 4px; font-size: .78rem; font-weight: 700; color: var(--suave); text-transform: uppercase; letter-spacing: .04em; }
+  .sino-item { padding: 9px 10px; border-radius: 10px; font-size: .84rem; }
+  .sino-item + .sino-item { border-top: 1px solid var(--vidro-borda); }
+  .sino-item b { display: block; color: var(--texto); }
+  .sino-item p { margin: 3px 0 0; color: var(--suave); font-size: .8rem; }
+  .sino-item .meta { display: flex; flex-wrap: wrap; gap: 4px 10px; margin-top: 5px; font-size: .74rem; color: var(--suave); }
+  .sino-item .meta a { color: var(--neon1); }
+  .sino-vazio { padding: 14px 10px; font-size: .84rem; color: var(--suave); }
   .filtros { display: flex; flex-wrap: wrap; align-items: center; gap: 10px 18px; margin-top: 14px; font-size: .86rem; }
   .filtros label { display: inline-flex; align-items: center; gap: 8px; cursor: pointer; color: var(--suave); }
   .filtros input { accent-color: var(--neon1); width: 16px; height: 16px; }
@@ -324,6 +348,13 @@ const DADOS = {
           <p class="sub" data-t="sub" data-html></p>
         </div>
         <div class="acoes-cab">
+          <div class="sino">
+            <button type="button" class="sino-btn" id="sino-btn" aria-haspopup="true" aria-expanded="false" aria-controls="sino-lista">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"/><path d="M10.3 21a1.94 1.94 0 0 0 3.4 0"/></svg>
+              <span class="conta" id="sino-conta" hidden></span>
+            </button>
+            <div class="sino-lista" id="sino-lista" hidden></div>
+          </div>
           <div class="menu">
             <button type="button" class="menu-btn" id="menu-btn" aria-label="Menu" title="Menu" aria-haspopup="true" aria-expanded="false" aria-controls="menu-lista">
               <svg viewBox="0 0 24 24" fill="currentColor"><circle cx="12" cy="5" r="1.8"/><circle cx="12" cy="12" r="1.8"/><circle cx="12" cy="19" r="1.8"/></svg>
@@ -362,6 +393,7 @@ const TEXTOS = {
   pt: {
     titulo: (p) => `Mapa · ${p}`, inicio: 'Início', assuntos: 'Assuntos',
     sub: 'Etapas em andamento, com o prompt e a IA de cada uma. Depois de cada merge, rode <code>/clear</code> e cole o prompt da próxima.',
+    sino: 'Aguardando a sua aprovação', sinoTitulo: 'Esperando você', sinoVazio: 'Nada esperando a sua aprovação.', sinoDesde: 'desde', sinoAbrir: 'Abrir',
     animacoes: 'Animações', ligadas: 'Ligadas', desligadas: 'Desligadas', autoAtualizar: 'Atualizar sozinho', desligado: 'Desligado',
     tema: 'Alternar tema claro/escuro', ocultar: 'Ocultar concluídas', livres: 'Só as que posso rodar agora', filtrarIa: 'Filtrar por IA',
     copiar: 'Copiar', copiado: 'Copiado!', modelo: 'Modelo', esforco: 'Esforço', subagentes: 'Subagentes', usaSub: 'Usa subagentes: ',
@@ -396,6 +428,7 @@ const TEXTOS = {
   en: {
     titulo: (p) => `${p} map`, inicio: 'Home', assuntos: 'Topics',
     sub: 'Work in progress, with the prompt and the AI for each step. After each merge, run <code>/clear</code> and paste the next prompt.',
+    sino: 'Waiting for your approval', sinoTitulo: 'Waiting for you', sinoVazio: 'Nothing is waiting for your approval.', sinoDesde: 'since', sinoAbrir: 'Open',
     animacoes: 'Animations', ligadas: 'On', desligadas: 'Off', autoAtualizar: 'Auto refresh', desligado: 'Off',
     tema: 'Toggle light/dark theme', ocultar: 'Hide finished', livres: 'Only what I can run now', filtrarIa: 'Filter by AI',
     copiar: 'Copy', copiado: 'Copied!', modelo: 'Model', esforco: 'Effort', subagentes: 'Subagents', usaSub: 'Uses subagents: ',
@@ -662,7 +695,30 @@ function ferramentas(g, temVarios) {
   return el('div', { class: 'ferramentas' }, caixa, sel, dir);
 }
 
+// Bell: what waits for the user's approval or answer (DADOS.aprovacoes).
+function desenharSino() {
+  const itens = DADOS.aprovacoes || [];
+  const btn = document.getElementById('sino-btn');
+  const conta = document.getElementById('sino-conta');
+  const lista = document.getElementById('sino-lista');
+  btn.setAttribute('aria-label', L.sino); btn.title = L.sino;
+  conta.textContent = String(itens.length);
+  conta.hidden = !itens.length;
+  btn.classList.toggle('tem', itens.length > 0);
+  document.title = (itens.length ? `(${itens.length}) ` : '') + L.titulo(PROJETO);
+  lista.replaceChildren(el('h3', {}, itens.length ? `${L.sinoTitulo} (${itens.length})` : L.sinoTitulo));
+  if (!itens.length) { lista.append(el('div', { class: 'sino-vazio' }, L.sinoVazio)); return; }
+  for (const i of itens) {
+    const meta = el('div', { class: 'meta' });
+    if (i.tarefa) meta.append(el('span', {}, i.tarefa));
+    if (i.desde) meta.append(el('span', {}, `${L.sinoDesde} ${i.desde}`));
+    if (i.link) meta.append(el('a', { href: i.link, target: '_blank', rel: 'noopener' }, L.sinoAbrir));
+    lista.append(el('div', { class: 'sino-item' }, el('b', {}, i.titulo), i.detalhe ? el('p', {}, i.detalhe) : null, meta));
+  }
+}
+
 function desenhar() {
+  desenharSino();
   const filtros = estado.filtros;
   for (const b of document.querySelectorAll('#f-ia button')) b.setAttribute('aria-pressed', String(filtros.ia === b.dataset.ia));
   const lateral = document.getElementById('lateral');
@@ -804,6 +860,15 @@ document.getElementById('tema').addEventListener('click', () => {
   document.documentElement.dataset.tema = novo;
   try { localStorage.setItem('mapa-tema', novo); } catch {}
 });
+const sinoBtn = document.getElementById('sino-btn');
+const sinoLista = document.getElementById('sino-lista');
+function abrirSino(aberto) {
+  sinoLista.hidden = !aberto;
+  sinoBtn.setAttribute('aria-expanded', String(aberto));
+}
+sinoBtn.addEventListener('click', e => { e.stopPropagation(); abrirSino(sinoLista.hidden); });
+document.addEventListener('click', e => { if (!sinoLista.hidden && !sinoLista.contains(e.target)) abrirSino(false); });
+document.addEventListener('keydown', e => { if (e.key === 'Escape' && !sinoLista.hidden) { abrirSino(false); sinoBtn.focus(); } });
 const menuBtn = document.getElementById('menu-btn');
 const menuLista = document.getElementById('menu-lista');
 function abrirMenu(aberto) {

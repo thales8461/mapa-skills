@@ -61,7 +61,7 @@ A report that reaches done gets ` — in done since <date>` in its heading.
 ## Step 3: plan the fixes
 1. Group the confirmed findings into tasks `<fixPrefix><n>`: one PR per problem; small findings in the same file or docs-only can go together. Ids: `reviews.mjs next-fix`.
 2. Each task: short title, IA/model/effort, `depende` only when two tasks touch the same file, and whether it is a sensitive part.
-3. Show the user one short message: per report, confirmed (with the proposed task), already fixed, not a defect (one-line reason) and doubts. Then ask the doubts (recommended option first) and the approval of the plan. Do not guess.
+3. Show the user one short message: per report, confirmed (with the proposed task), already fixed, not a defect (one-line reason) and doubts. Then ask the doubts (recommended option first) and the approval of the plan. Do not guess. If the approval does not come right away, add it to the bell of the map (`sino` skill).
 
 ## Step 4: approved — write the fix topic in the map
 1. Re-read the map lines right before the edit. Add the topic `{ id: "review-fixes-<date>", titulo: "Fixes from the reviews of <date>", descricao: "<findings checked on main <commit> and approved by the user on <date>; reports in <inProgress>; dismissed: ...>", tarefas: [...] }`.

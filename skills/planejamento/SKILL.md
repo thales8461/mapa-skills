@@ -27,7 +27,8 @@ Phrases like "done", "that's all", "you can plan". Not sure it is the end: ask.
 3. Ask the questions from the list and the new ones, **with options**, marking your own suggestion as the recommendation. Never guess what the user meant.
 4. Build the plan in small steps (one pull request per problem), following the project rules.
 5. Plan approved: write the decisions where the project keeps them. If the project has a map (`mapa` skill), add the plan as a topic there.
-6. Implement only if the user asks.
+6. A plan or report left waiting for the user's approval: add it to the bell of the map (`sino` skill) and remove it when the user answers.
+7. Implement only if the user asks.
 
 ## Limits
 - The notes live in the session scratchpad: if the session ends before phase 2, the requests are lost. Warn the user if they mention closing the session in the middle.

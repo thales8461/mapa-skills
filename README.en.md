@@ -2,11 +2,12 @@
 
 [Português](README.md)
 
-Seven Claude Code skills that organize a project in small steps (one pull request per task) and let Claude run many tasks on its own.
+Eight Claude Code skills that organize a project in small steps (one pull request per task) and let Claude run many tasks on its own.
 
 | Skill | What for |
 |---|---|
 | `/mapa` | Creates and keeps the project **map**: one HTML file with each plan (topic) split into tasks, each with a ready-to-copy prompt, the AI, the model, the effort, the estimated cost and its dependencies. |
+| `sino` | Runs **on its own** when something waits for your approval or answer (report, mockup, plan, PR to merge): adds an item to the **bell** at the top of the map, with a counter, and removes it when you answer. |
 | `/fila` | You paste a task prompt and the session **waits** until its dependencies are done in the map before starting. |
 | `/pos` | `/pos A1` + the A2 prompt: A2 starts only after A1 is **merged**, even without depending on it (to run in sequence tasks that could run in parallel). |
 | `/planejamento` | You send many screenshots and change requests; Claude **only takes notes** until you say you are done, then plans, asking about anything unclear. |
@@ -27,7 +28,7 @@ Requirements: [Claude Code](https://claude.com/claude-code), Node.js 18+, git. `
 /plugin install mapa@mapa-skills
 ```
 
-**As loose skills** (commands stay `/mapa`, `/fila`...): copy the seven folders under `skills/` to `~/.claude/skills/`. Keep them together: `fila`, `pos`, `orquestrador`, `prompt-revisao` and `revisao` use the script in the `mapa` folder.
+**As loose skills** (commands stay `/mapa`, `/fila`...): copy the eight folders under `skills/` to `~/.claude/skills/`. Keep them together: `fila`, `pos`, `orquestrador`, `prompt-revisao` and `revisao` use the script in the `mapa` folder.
 
 The skill instructions are in English; Claude replies in your language. Field names inside the map data are in Portuguese (glossary in [`schema.md`](skills/mapa/references/schema.md)).
 

@@ -13,6 +13,7 @@ Field names are in Portuguese. The table gives the English meaning.
 | `revisor` | Who runs the final review of a finished topic (default `Codex`). |
 | `caminho` | Absolute path of the map file. It goes into copied prompts so any agent can find the map. |
 | `atualizado` | Date of the last agent edit. Update it on every edit. A trailing `//` comment with a short change log is allowed. |
+| `aprovacoes` | The bell: what waits for the user's approval or answer, `{ id, titulo, detalhe, desde: 'dd/mm hh:mm', tarefa?, link? }`. Agents add and remove items (`sino` skill). |
 | `fixos` | Loose prompts pinned to the top: `{ titulo, descricao, ia, modelo, esforco, rotulo, texto }`. |
 | `assuntos` | List of topics. |
 

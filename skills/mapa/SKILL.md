@@ -37,6 +37,7 @@ Edit only the field you own, after re-reading the lines:
 | Topic blocked by something external | `pausa: '<reason>'` on the topic |
 | Last task of a topic merged | `revisao: [<review prompts>]` on the topic (`prompt-revisao` skill) |
 | Final review done | `revisado: '<date>'` on the topic |
+| Something waits for the user's approval or answer | item in `aprovacoes` (the bell, `sino` skill); remove it when the user answers or its task is `feita` |
 
 Update `atualizado` on every change except `fila`.
 

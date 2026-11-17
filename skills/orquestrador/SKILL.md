@@ -78,7 +78,7 @@ For each ready PR:
 5. A PR that depends on an unmerged one: merge only after it, already with `git merge origin/main`.
 
 ## Step 8: end
-- Nothing left running: list the "merge at the end" PRs in dependency order and ask once (no timeout). Merge the approved ones with step 7.
+- Nothing left running: list the "merge at the end" PRs in dependency order and ask once (no timeout). Merge the approved ones with step 7. Each PR waiting for the merge and each unanswered question goes to the bell of the map (`sino` skill) and leaves it when the user answers.
 - A topic finished completely: `prompt-revisao` skill (writes the topic's `revisao`).
 - Final summary: merged, still open, unanswered questions, warnings.
 

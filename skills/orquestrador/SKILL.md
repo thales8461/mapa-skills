@@ -30,6 +30,13 @@ Before starting, show the plan in a few lines: waves, model and effort of each t
 - `dependsOutsideSelectionPending` is not empty;
 - `waves` ends with `blocked`.
 
+## Orchestrators panel in the map
+The top of the map shows each running orchestrator from `DADOS.orquestradores`. Re-read the lines right before each edit and touch only this session's entry.
+- **At the start** (after showing the plan): add `{ id: 'orq-<ddmm-hhmm>', pedido: '<topic or ids, short>', desde: 'dd/mm hh:mm', tarefas: [<pending ids>], estados: {}, nota: '<next step, short>' }`. Write the `id` in the orchestrator ESTADO.md.
+- **`estados`** only when the status does not come from the task itself: `'pronta'` (PR reviewed, waiting for "can I merge?"), `'fim'` (in the "merge at the end" list), `'duvida'` (waiting for the user). Remove the key when that status ends. Running, merged and waiting come from `trabalhando` and `feita`.
+- **`nota`**: update it when what the user needs to know changes (e.g. "Question on A8: which layout"; "Waiting for the merge of #15").
+- **At the end** (step 8, nothing running and nothing waiting): remove the entry. If the session stops with a question or a merge pending, the entry stays, with the `nota` saying what.
+
 ## Step 2: execution order
 - A task is **ready** when each dependency is done in the map **or** has its PR ready (reviewed and approved by you), even if not merged yet.
 - Ready tasks with no dependency between them run in parallel.
@@ -73,7 +80,7 @@ For each ready PR:
 ## Step 7: merge (one PR at a time)
 1. In the worktree: `git fetch` and `git merge origin/main`. Resolve conflicts in progress/doc files by keeping main first and re-adding the branch's part. Run the tests of the changed area again.
 2. `mergeCommand` (default `gh pr merge {pr} --merge`) and confirm it merged (`gh pr view <N> --json state` = `MERGED`). Only then `worktree.remove`.
-3. Map: `feita: true` (remove `trabalhando`, `pr`, `fila`) and update `atualizado`.
+3. Map: `feita: true` (remove `trabalhando`, `pr`, `fila`), remove the id from `estados` in the orchestrator entry and update `atualizado`.
 4. Main folder: `afterMerge` commands (default `git pull`).
 5. A PR that depends on an unmerged one: merge only after it, already with `git merge origin/main`.
 
@@ -97,3 +104,4 @@ For each ready PR:
 | Picking the most likely option when unsure | Orchestrator → Fable → user; without certainty, the task stops |
 | Writing the map from an old copy | Re-read right before each edit (other sessions write too) |
 | Marking `feita` before the merge | Only after `state: MERGED` |
+| Ending and leaving the entry in `orquestradores` | Remove it at the end; it stays only with a question or merge pending, with the `nota` |

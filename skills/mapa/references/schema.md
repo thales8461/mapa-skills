@@ -14,6 +14,7 @@ Field names are in Portuguese. The table gives the English meaning.
 | `caminho` | Absolute path of the map file. It goes into copied prompts so any agent can find the map. |
 | `atualizado` | Date of the last agent edit. Update it on every edit. A trailing `//` comment with a short change log is allowed. |
 | `aprovacoes` | The bell: what waits for the user's approval or answer, `{ id, titulo, detalhe, desde: 'dd/mm hh:mm', tarefa?, link? }`. Agents add and remove items (`sino` skill). |
+| `orquestradores` | Orchestrators working, shown at the top: `{ id: 'orq-ddmm-hhmm', pedido, desde: 'dd/mm hh:mm', tarefas: [ids], estados: { <id>: 'rodando' \| 'pronta' \| 'fim' \| 'duvida' }, nota }`. Written by the `orquestrador` skill when it starts and removed when it ends. Without an `estados` entry, the task state decides: `feita` = merged, `trabalhando` = running, otherwise waiting. |
 | `fixos` | Loose prompts pinned to the top: `{ titulo, descricao, ia, modelo, esforco, rotulo, texto }`. |
 | `assuntos` | List of topics. |
 

@@ -52,6 +52,10 @@ const DADOS = {
   // Bell: what waits for the user's approval or answer. Agents add and remove items
   // ({ id, titulo, detalhe, desde: 'dd/mm hh:mm', tarefa?, link? }); see the sino skill.
   aprovacoes: [],
+  // Orchestrators: /orquestrador sessions running now, shown at the top. The skill adds
+  // { id: 'orq-ddmm-hhmm', pedido, desde: 'dd/mm hh:mm', tarefas: [ids], estados: { <id>: 'rodando' |
+  // 'pronta' | 'fim' | 'duvida' }, nota? } when it starts and removes it when it ends; see the orquestrador skill.
+  orquestradores: [],
   fixos: [],
   assuntos: [
     {
@@ -168,7 +172,7 @@ const DADOS = {
   .ferramentas .dir:hover { border-color: var(--neon1); color: var(--primaria); }
   .ferramentas .dir:disabled { opacity: .35; cursor: default; }
   .grupo-lat .vazio-g { color: var(--suave); font-size: .8rem; padding: 4px 12px 6px; margin: 0; }
-  .grupo { margin-bottom: 18px; }
+  .grupo { margin-bottom: 14px; }
   .grupo > .gcab { font-size: .8rem; padding: 10px 14px; margin-bottom: 4px; }
   .grupo > .gcorpo { padding: 0; }
   .arrastando { opacity: .4; }
@@ -188,11 +192,11 @@ const DADOS = {
   code { font-family: "JetBrains Mono", monospace; font-size: .85em; background: var(--primaria-fundo); color: var(--primaria); padding: 1px 6px; border-radius: 6px; }
   .barra { height: 8px; background: var(--linha); border-radius: 99px; overflow: hidden; }
   .barra > div { height: 100%; width: 0; border-radius: 99px; background: linear-gradient(90deg, var(--neon1), var(--neon2)); box-shadow: 0 0 12px var(--neon2); transition: width .6s cubic-bezier(.2,.8,.2,1); }
-  .cabecalho { position: sticky; top: 16px; z-index: 10; border-radius: 22px; padding: 22px 26px 18px; margin-bottom: 22px; background: var(--vidro-forte); }
+  .cabecalho { position: sticky; top: 16px; z-index: 10; border-radius: 20px; padding: 18px 22px 14px; margin-bottom: 16px; background: var(--vidro-forte); }
   .cab-linha { display: flex; align-items: flex-start; gap: 16px; justify-content: space-between; }
-  .cabecalho h1 { margin: 0; font-size: 1.7rem; font-weight: 700;
+  .cabecalho h1 { margin: 0; font-size: 1.5rem; font-weight: 700;
     background: linear-gradient(90deg, var(--texto) 20%, var(--neon1) 60%, var(--neon2)); -webkit-background-clip: text; background-clip: text; color: transparent; }
-  .cabecalho .sub { margin: 4px 0 14px; font-size: .9rem; color: var(--suave); }
+  .cabecalho .sub { margin: 2px 0 12px; font-size: .9rem; color: var(--suave); }
   .tema { flex: none; width: 44px; height: 44px; border-radius: 14px; border: 1px solid var(--vidro-borda); background: var(--vidro); color: var(--texto); cursor: pointer; display: grid; place-items: center; transition: box-shadow .3s, transform .3s; }
   .tema:hover { transform: rotate(-15deg); box-shadow: 0 0 20px var(--neon1); }
   .tema svg { width: 20px; height: 20px; }
@@ -229,7 +233,7 @@ const DADOS = {
   .sino-item .meta { display: flex; flex-wrap: wrap; gap: 4px 10px; margin-top: 5px; font-size: .74rem; color: var(--suave); }
   .sino-item .meta a { color: var(--neon1); }
   .sino-vazio { padding: 14px 10px; font-size: .84rem; color: var(--suave); }
-  .filtros { display: flex; flex-wrap: wrap; align-items: center; gap: 10px 18px; margin-top: 14px; font-size: .86rem; }
+  .filtros { display: flex; flex-wrap: wrap; align-items: center; gap: 10px 18px; margin-top: 10px; font-size: .86rem; }
   .filtros label { display: inline-flex; align-items: center; gap: 8px; cursor: pointer; color: var(--suave); }
   .filtros input { accent-color: var(--neon1); width: 16px; height: 16px; }
   .botoes-ia { display: inline-flex; gap: 8px; flex-wrap: wrap; }
@@ -247,52 +251,52 @@ const DADOS = {
   .legenda-geral span { display: inline-flex; align-items: center; gap: 6px; }
   .legenda-geral i { width: 8px; height: 8px; border-radius: 50%; background: var(--cor-grupo); box-shadow: 0 0 6px var(--cor-grupo); }
   .legenda-geral b { color: var(--texto); font-weight: 600; }
-  .assunto { border-radius: 22px; margin-bottom: 20px; scroll-margin-top: 220px; transition: box-shadow .3s, border-color .3s; animation: entra .5s both; }
+  .assunto { border-radius: 18px; margin-bottom: 12px; scroll-margin-top: 220px; transition: box-shadow .3s, border-color .3s; animation: entra .5s both; }
   @keyframes entra { from { opacity: 0; transform: translateY(10px); } }
   .assunto:hover { border-color: rgb(139 108 255 / .4); }
-  .assunto.concluido { border-color: rgb(60 245 160 / .45); box-shadow: var(--sombra), 0 0 24px -6px var(--ok); }
-  .assunto > button.topo { all: unset; box-sizing: border-box; width: 100%; cursor: pointer; display: grid; grid-template-columns: 1fr auto auto; gap: 10px 16px; padding: 20px 24px; border-radius: 22px; }
+  .assunto.concluido { border-color: rgb(60 245 160 / .45); box-shadow: var(--sombra), 0 0 14px -8px var(--ok); }
+  .assunto > button.topo { all: unset; box-sizing: border-box; width: 100%; cursor: pointer; display: grid; grid-template-columns: 1fr auto auto; gap: 8px 14px; padding: 14px 20px; border-radius: 18px; }
   .assunto > button.topo:focus-visible { outline: 2px solid var(--neon1); outline-offset: 2px; }
-  .topo h2 { margin: 0; font-size: 1.15rem; font-weight: 600; }
+  .topo h2 { margin: 0; font-size: 1.02rem; font-weight: 600; }
   .assunto.concluido .topo h2 { text-decoration: line-through; color: var(--suave); }
-  .topo .seta { align-self: center; transition: transform .3s; color: var(--suave); width: 34px; height: 34px; border-radius: 10px; display: grid; place-items: center; background: var(--primaria-fundo); }
+  .topo .seta { align-self: center; transition: transform .3s; color: var(--suave); width: 28px; height: 28px; border-radius: 9px; display: grid; place-items: center; background: var(--primaria-fundo); }
   .assunto.aberto .topo .seta { transform: rotate(180deg); color: var(--primaria); }
   .topo .linha { grid-column: 1 / -1; display: flex; align-items: center; gap: 12px; }
-  .topo .linha .barra { flex: 1; height: 6px; }
+  .topo .linha .barra { flex: 1; height: 5px; }
   .topo .linha span { color: var(--suave); font-size: .82rem; white-space: nowrap; font-weight: 600; }
-  .corpo { display: none; padding: 0 24px 24px; }
+  .corpo { display: none; padding: 0 20px 16px; }
   .assunto.aberto .corpo { display: block; }
-  .corpo > p.desc { color: var(--suave); margin: 0 0 14px; font-size: .9rem; }
-  .tarefa { background: var(--vidro); border: 1px solid var(--linha); border-radius: 16px; padding: 14px 16px; margin-top: 12px; transition: border-color .2s, box-shadow .2s; }
+  .corpo > p.desc { color: var(--suave); margin: 0 0 8px; font-size: .85rem; }
+  .tarefa { background: var(--vidro); border: 1px solid var(--linha); border-radius: 12px; padding: 10px 14px; margin-top: 8px; transition: border-color .2s, box-shadow .2s; }
   .tarefa:hover { border-color: rgb(139 108 255 / .35); }
   .tarefa.feita { opacity: .55; }
   .tarefa.feita .ttl { text-decoration: line-through; }
   .tarefa.bloqueada { opacity: .5; }
-  .tarefa.proxima { border-color: var(--neon1); box-shadow: 0 0 0 1px var(--neon1), 0 0 30px -6px var(--neon1); }
-  .tcab { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
-  .id { font: 700 .8rem "JetBrains Mono", monospace; background: var(--primaria-fundo); color: var(--primaria); border-radius: 8px; padding: 3px 9px; }
-  .ttl { flex: 1; min-width: 200px; font-weight: 600; }
+  .tarefa.proxima { border-color: var(--neon1); box-shadow: 0 0 0 1px var(--neon1), 0 0 16px -8px var(--neon1); }
+  .tcab { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+  .id { font: 700 .74rem "JetBrains Mono", monospace; background: var(--primaria-fundo); color: var(--primaria); border-radius: 7px; padding: 2px 8px; }
+  .ttl { flex: 1; min-width: 200px; font-weight: 600; font-size: .92rem; }
   .selo { font-size: .74rem; font-weight: 600; border-radius: 99px; padding: 3px 10px; white-space: nowrap; }
-  .selo.proxima { background: linear-gradient(90deg, var(--neon1), var(--neon2)); color: #fff; box-shadow: 0 0 14px rgb(109 76 255 / .6); animation: pulsa 2.4s ease-in-out infinite; }
-  @keyframes pulsa { 50% { box-shadow: 0 0 24px rgb(34 227 255 / .7); } }
+  .selo.proxima { background: linear-gradient(90deg, var(--neon1), var(--neon2)); color: #fff; box-shadow: 0 0 8px rgb(109 76 255 / .5); animation: pulsa 2.4s ease-in-out infinite; }
+  @keyframes pulsa { 50% { box-shadow: 0 0 14px rgb(34 227 255 / .6); } }
   .selo.livre { background: var(--primaria-fundo); color: var(--primaria); }
   .selo.bloq { background: var(--aviso-fundo); color: var(--aviso); }
   .selo.ok { background: var(--ok-fundo); color: var(--ok); }
-  .selo.trab { background: var(--neon2); color: #fff; box-shadow: 0 0 14px var(--neon2); animation: pulsa 2.4s ease-in-out infinite; }
+  .selo.trab { background: var(--neon2); color: #fff; box-shadow: 0 0 8px var(--neon2); animation: pulsa 2.4s ease-in-out infinite; }
   .g-trab { --cor-grupo: var(--neon2); }
   .selo.fila { background: color-mix(in srgb, var(--neon3) 14%, transparent); color: var(--neon3); border: 1px dashed var(--neon3); cursor: help; }
   .g-fila { --cor-grupo: var(--neon3); }
-  .feito-btn, .copiar { font: inherit; font-size: .8rem; font-weight: 600; border: 1px solid var(--vidro-borda); background: var(--vidro-forte); color: var(--texto); border-radius: 10px; padding: 5px 12px; cursor: pointer; transition: all .2s; }
+  .feito-btn, .copiar { font: inherit; font-size: .76rem; font-weight: 600; border: 1px solid var(--vidro-borda); background: var(--vidro-forte); color: var(--texto); border-radius: 9px; padding: 4px 10px; cursor: pointer; transition: all .2s; }
   .feito-btn:hover { border-color: var(--ok); color: var(--ok); box-shadow: 0 0 14px -2px var(--ok); }
   .feito-btn.on { background: var(--ok-fundo); color: var(--ok); border-color: var(--ok); }
   .feito-btn:disabled { cursor: default; box-shadow: none; }
   .copiar:hover { border-color: var(--neon2); color: var(--neon2); box-shadow: 0 0 14px -2px var(--neon2); }
   .copiar.ok { border-color: var(--ok); color: var(--ok); background: var(--ok-fundo); }
-  .prompt { margin-top: 12px; }
-  .pcab { display: flex; align-items: center; gap: 10px 12px; flex-wrap: wrap; margin-bottom: 8px; }
-  .ia { display: inline-flex; align-items: center; gap: 7px; font-weight: 700; font-size: .9rem; }
-  .ia svg { width: 20px; height: 20px; flex: none; }
-  .pcab .meta { color: var(--suave); font-size: .82rem; }
+  .prompt { margin-top: 8px; }
+  .pcab { display: flex; align-items: center; gap: 8px 10px; flex-wrap: wrap; margin-bottom: 6px; }
+  .ia { display: inline-flex; align-items: center; gap: 7px; font-weight: 700; font-size: .84rem; }
+  .ia svg { width: 16px; height: 16px; flex: none; }
+  .pcab .meta { color: var(--suave); font-size: .78rem; }
   .pcab .meta b { color: var(--texto); font-weight: 600; }
   .pcab .esp { flex: 1; }
   .gasto { display: inline-flex; align-items: center; gap: 6px; font-size: .74rem; color: var(--suave); white-space: nowrap; }
@@ -307,14 +311,59 @@ const DADOS = {
   .tempo b { color: var(--texto); font-weight: 600; }
   .subag { display: inline-flex; align-items: center; gap: 5px; font-size: .74rem; font-weight: 600; border-radius: 99px; padding: 2px 10px 2px 8px; background: var(--sub-fundo); color: var(--sub); border: 1px solid var(--sub-borda); cursor: help; white-space: nowrap; }
   .subag svg { width: 12px; height: 12px; fill: currentColor; }
-  pre { margin: 0; white-space: pre-wrap; word-break: break-word; background: var(--codigo); border: 1px solid var(--linha); border-left: 3px solid var(--neon2); border-radius: 12px; padding: 12px 14px; font: 12.5px/1.6 "JetBrains Mono", ui-monospace, Consolas, monospace; max-height: 320px; overflow: auto; }
+  pre { margin: 0; white-space: pre-wrap; word-break: break-word; background: var(--codigo); border: 1px solid var(--linha); border-left: 2px solid var(--neon2); border-radius: 10px; padding: 9px 12px; font: 12px/1.55 "JetBrains Mono", ui-monospace, Consolas, monospace; max-height: 220px; overflow: auto; }
   .revisao { margin-top: 18px; border-top: 1px dashed var(--linha); padding-top: 14px; }
   .revisao h3 { margin: 0 0 4px; font-size: 1rem; }
   .revisao p { color: var(--suave); margin: 0; }
   .vazio { color: var(--suave); text-align: center; padding: 40px; }
-  #fixos { margin: 0 0 20px; }
-  #fixos .tarefa { border-radius: 22px; padding: 18px 22px; border: 1px solid rgb(34 227 255 / .35); box-shadow: var(--sombra), 0 0 30px -12px var(--neon2); backdrop-filter: blur(22px); }
-  #fixos .tarefa > p { color: var(--suave); margin: 6px 0 0; font-size: .88rem; }
+  /* Fixed lines: collapsible section, one row per item with Copy. */
+  #fixos { margin: 0 0 14px; }
+  .fixos-sec { border-radius: 18px; }
+  .fixos-sec > .gcab { padding: 12px 16px; }
+  .fixos-sec > .gcorpo { padding: 0 14px 8px; }
+  .fixo + .fixo { border-top: 1px solid var(--linha); }
+  .fixo-linha { display: flex; align-items: center; gap: 10px; padding: 6px 2px; }
+  .fixo-linha .abrir { all: unset; box-sizing: border-box; flex: 1; min-width: 0; display: flex; align-items: center; gap: 8px; cursor: pointer; font-size: .86rem; font-weight: 600; border-radius: 8px; }
+  .fixo-linha .abrir:hover { color: var(--primaria); }
+  .fixo-linha .abrir:focus-visible { outline: 2px solid var(--neon1); outline-offset: 2px; }
+  .fixo-linha .seta-p { width: 13px; height: 13px; flex: none; color: var(--suave); transition: transform .2s; }
+  .fixo.aberto .fixo-linha .seta-p { transform: rotate(90deg); }
+  .fixo-linha .t { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .fixo-linha .cmd { flex: 0 1 auto; max-width: 34%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; background: none; color: var(--suave); padding: 0; font-size: .74rem; }
+  .fixo.aberto .fixo-linha .copiar { visibility: hidden; }
+  .fixo-corpo { padding: 0 2px 10px 21px; }
+  .fixo-corpo > p { color: var(--suave); margin: 0; font-size: .84rem; }
+  /* Orchestrators working: DADOS.orquestradores, written by the orquestrador skill. */
+  #orquestradores { margin: 0 0 14px; }
+  #orquestradores:empty { display: none; }
+  .orq-titulo { display: flex; align-items: center; gap: 8px; font-size: .72rem; text-transform: uppercase; letter-spacing: .08em; font-weight: 600; color: var(--suave); margin: 0 6px 8px; }
+  .orq-titulo .qtd { font: 600 .72rem "JetBrains Mono", monospace; letter-spacing: 0; border-radius: 99px; padding: 1px 9px; background: var(--linha); color: var(--neon2); }
+  .orq-grade { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 10px; align-items: start; }
+  .orq { border-radius: 16px; padding: 12px 16px; border-color: color-mix(in srgb, var(--neon2) 35%, transparent); }
+  .orq.tem-duvida { border-color: color-mix(in srgb, var(--aviso) 60%, transparent); }
+  .orq-cab { display: flex; align-items: center; gap: 8px; font-size: .9rem; min-width: 0; }
+  .orq-cab b { font-weight: 600; flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .orq-desde { color: var(--suave); font-size: .74rem; white-space: nowrap; }
+  .orq-pulso { width: 8px; height: 8px; flex: none; border-radius: 50%; background: var(--neon2); animation: orq-pulso 1.8s ease-out infinite; }
+  @keyframes orq-pulso { 0% { box-shadow: 0 0 0 0 color-mix(in srgb, var(--neon2) 70%, transparent); } 100% { box-shadow: 0 0 0 7px transparent; } }
+  .orq-linha { display: flex; align-items: center; gap: 10px; margin-top: 8px; }
+  .orq-linha .barra { flex: 1; height: 5px; }
+  .orq-linha span { font-size: .76rem; color: var(--suave); font-weight: 600; white-space: nowrap; }
+  .orq-resumo { margin: 4px 0 0; font-size: .76rem; color: var(--suave); }
+  .orq-chips { display: flex; flex-wrap: wrap; gap: 5px; margin-top: 8px; }
+  .orq-chip { --c: var(--suave); display: inline-flex; align-items: center; gap: 5px; font: 600 .72rem "JetBrains Mono", monospace; text-decoration: none; color: var(--c);
+    border: 1px solid color-mix(in srgb, var(--c) 40%, transparent); background: color-mix(in srgb, var(--c) 10%, transparent); border-radius: 99px; padding: 1px 8px; }
+  .orq-chip:hover { background: color-mix(in srgb, var(--c) 20%, transparent); }
+  .orq-chip i { width: 6px; height: 6px; border-radius: 50%; background: var(--c); }
+  .orq-chip.e-rodando { --c: var(--neon2); } .orq-chip.e-rodando i { animation: orq-pulso 1.8s ease-out infinite; }
+  .orq-chip.e-pronta { --c: var(--primaria); }
+  .orq-chip.e-fim { --c: var(--primaria); border-style: dashed; }
+  .orq-chip.e-duvida { --c: var(--aviso); }
+  .orq-chip.e-feita { --c: var(--ok); opacity: .75; }
+  .orq-nota { margin: 8px 0 0; font-size: .78rem; color: var(--suave); border-top: 1px dashed var(--linha); padding-top: 6px; }
+  [data-animacoes="off"] .orq-pulso, [data-animacoes="off"] .orq-chip i { animation: none; }
+  @media (prefers-reduced-motion: reduce) { .orq-pulso, .orq-chip i { animation: none; } }
+  @media (max-width: 640px) { .fixo-linha .cmd { display: none; } }
   footer { color: var(--suave); font-size: .8rem; margin-top: 32px; text-align: center; }
   ::-webkit-scrollbar { width: 10px; height: 10px; } ::-webkit-scrollbar-thumb { background: var(--primaria-fundo); border-radius: 99px; }
   @media (max-width: 960px) {
@@ -381,6 +430,7 @@ const DADOS = {
         <div class="botoes-ia" id="f-ia" role="group"></div>
       </div>
     </header>
+    <div id="orquestradores"></div>
     <div id="fixos"></div>
     <div id="assuntos"></div>
     <footer id="rodape"></footer>
@@ -397,6 +447,8 @@ const TEXTOS = {
     animacoes: 'Animações', ligadas: 'Ligadas', desligadas: 'Desligadas', autoAtualizar: 'Atualizar sozinho', desligado: 'Desligado',
     tema: 'Alternar tema claro/escuro', ocultar: 'Ocultar concluídas', livres: 'Só as que posso rodar agora', filtrarIa: 'Filtrar por IA',
     copiar: 'Copiar', copiado: 'Copiado!', modelo: 'Modelo', esforco: 'Esforço', subagentes: 'Subagentes', usaSub: 'Usa subagentes: ',
+    fixosTitulo: 'Skills e frases prontas', orqTitulo: 'Orquestradores trabalhando', orqDesde: 'desde', orqDe: 'de', orqSigla: 'orquestrador', orqTip: 'Orquestrador: ',
+    orqEstados: { rodando: 'Rodando', pronta: 'PR pronta', fim: 'Mesclar no fim', duvida: 'Dúvida', esperando: 'Esperando', feita: 'Mesclada' },
     gasto: 'Gasto', extremo: 'EXTREMAMENTE ALTO', gastoExtremo: 'Gasto estimado: acima de 30% do limite de 5 h',
     gastoTip: (n) => `Gasto estimado: ${n}/10 (cerca de ${n * 3}% do limite de 5 h)`,
     tempo: 'Tempo', tempoTip: 'Previsão de duração (tempo trabalhando, sem contar a espera pelas suas respostas). ',
@@ -432,6 +484,8 @@ const TEXTOS = {
     animacoes: 'Animations', ligadas: 'On', desligadas: 'Off', autoAtualizar: 'Auto refresh', desligado: 'Off',
     tema: 'Toggle light/dark theme', ocultar: 'Hide finished', livres: 'Only what I can run now', filtrarIa: 'Filter by AI',
     copiar: 'Copy', copiado: 'Copied!', modelo: 'Model', esforco: 'Effort', subagentes: 'Subagents', usaSub: 'Uses subagents: ',
+    fixosTitulo: 'Skills and ready-made lines', orqTitulo: 'Orchestrators working', orqDesde: 'since', orqDe: 'of', orqSigla: 'orchestrator', orqTip: 'Orchestrator: ',
+    orqEstados: { rodando: 'Running', pronta: 'PR ready', fim: 'Merge at the end', duvida: 'Question', esperando: 'Waiting', feita: 'Merged' },
     gasto: 'Cost', extremo: 'EXTREMELY HIGH', gastoExtremo: 'Estimated cost: above 30% of the 5-hour limit',
     gastoTip: (n) => `Estimated cost: ${n}/10 (about ${n * 3}% of the 5-hour limit)`,
     tempo: 'Time', tempoTip: 'Expected duration (working time, not counting the wait for your answers). ',
@@ -487,7 +541,7 @@ const ICONES = {
 const CHAVE = 'mapa:' + PROJETO;
 function ler() { try { return JSON.parse(localStorage.getItem(CHAVE)) || {}; } catch { return {}; } }
 function gravar() { try { localStorage.setItem(CHAVE, JSON.stringify(estado)); } catch {} }
-const estado = Object.assign({ feitas: {}, abertos: {}, grupos: {}, ordem: {}, ordenacao: {} }, ler());
+const estado = Object.assign({ feitas: {}, abertos: {}, grupos: {}, ordem: {}, ordenacao: {}, fixosAberto: false, fixoAberto: {} }, ler());
 estado.filtros = Object.assign({ ocultar: false, livres: false, ia: '' }, estado.filtros);
 
 const chaveTarefa = (a, t) => a.id + '/' + t.id;
@@ -717,6 +771,76 @@ function desenharSino() {
   }
 }
 
+// Fixed lines (skills and ready-made prompts): collapsible section, one row per item with Copy.
+function desenharFixos(filtros) {
+  const caixa = document.getElementById('fixos');
+  const itens = (DADOS.fixos || []).filter((x) => !filtros.ia || x.ia === filtros.ia);
+  caixa.replaceChildren();
+  if (!itens.length) return;
+  const aberto = !!estado.fixosAberto;
+  const cab = el('button', { type: 'button', class: 'gcab', 'aria-expanded': String(aberto) },
+    el('span', { html: SETA_GRUPO }), el('span', { class: 'ponto' }), el('span', {}, L.fixosTitulo),
+    el('span', { class: 'qtd', html: `<b>${itens.length}</b>` }));
+  cab.addEventListener('click', () => { estado.fixosAberto = !aberto; gravar(); desenhar(); });
+  const corpo = el('div', { class: 'gcorpo' });
+  for (const f of itens) {
+    const ab = !!estado.fixoAberto[f.titulo];
+    const botao = el('button', { type: 'button', class: 'copiar' }, L.copiar);
+    botao.addEventListener('click', () => copiar(f.texto, botao));
+    const abrir = el('button', { type: 'button', class: 'abrir', 'aria-expanded': String(ab), title: f.descricao },
+      el('span', { html: SETA_GRUPO }), el('span', { class: 't' }, f.titulo));
+    abrir.addEventListener('click', () => { estado.fixoAberto[f.titulo] = !ab; gravar(); desenhar(); });
+    corpo.append(el('div', { class: 'fixo' + (ab ? ' aberto' : '') },
+      el('div', { class: 'fixo-linha' }, abrir, el('code', { class: 'cmd' }, f.texto.split('\n')[0]), botao),
+      ab ? el('div', { class: 'fixo-corpo' }, el('p', {}, f.descricao), blocoPrompt(f)) : null));
+  }
+  caixa.append(el('div', { class: 'fixos-sec vidro g-dev' + (aberto ? ' aberto' : '') }, cab, corpo));
+}
+
+// Orchestrators: /orquestrador sessions running now (DADOS.orquestradores, written by the skill).
+const ESTADOS_ORQ = L.orqEstados;
+function acharTarefa(id) {
+  for (const a of DADOS.assuntos) { const t = a.tarefas.find((x) => x.id === id); if (t) return { a, t }; }
+  return null;
+}
+function estadoOrq(o, id) {
+  const achado = acharTarefa(id);
+  if (achado && feita(achado.a, achado.t)) return 'feita';
+  const e = (o.estados || {})[id];
+  if (ESTADOS_ORQ[e]) return e;
+  return achado && (achado.t.trabalhando || achado.t.pr) ? 'rodando' : 'esperando';
+}
+const orqDaTarefa = (id) => (DADOS.orquestradores || []).find((o) => (o.tarefas || []).includes(id));
+function desenharOrquestradores() {
+  const caixa = document.getElementById('orquestradores');
+  const lista = DADOS.orquestradores || [];
+  caixa.replaceChildren();
+  if (!lista.length) return;
+  const cartoes = lista.map((o) => {
+    const ids = o.tarefas || [];
+    const est = ids.map((id) => estadoOrq(o, id));
+    const conta = (e) => est.filter((x) => x === e).length;
+    const resumo = ['rodando', 'pronta', 'fim', 'duvida', 'esperando'].filter(conta)
+      .map((e) => `${conta(e)} ${ESTADOS_ORQ[e].toLowerCase()}`).join(' · ');
+    const barra = el('div', { class: 'barra' }, el('div'));
+    barra.firstChild.style.width = (ids.length ? conta('feita') / ids.length * 100 : 0) + '%';
+    const chips = ids.map((id, i) => {
+      const achado = acharTarefa(id);
+      return el('a', { class: 'orq-chip e-' + est[i], href: achado ? '#' + achado.a.id : '#',
+        title: `${id}${achado ? ': ' + achado.t.titulo : ''} · ${ESTADOS_ORQ[est[i]]}` }, el('i'), id);
+    });
+    return el('div', { class: 'orq vidro' + (conta('duvida') ? ' tem-duvida' : '') },
+      el('div', { class: 'orq-cab' }, el('span', { class: 'orq-pulso' }), el('b', { title: o.pedido || o.id }, o.pedido || o.id),
+        o.desde ? el('span', { class: 'orq-desde' }, L.orqDesde + ' ' + o.desde) : null),
+      el('div', { class: 'orq-linha' }, barra, el('span', {}, `${conta('feita')} ${L.orqDe} ${ids.length}`)),
+      resumo ? el('p', { class: 'orq-resumo' }, resumo) : null,
+      el('div', { class: 'orq-chips' }, ...chips),
+      o.nota ? el('p', { class: 'orq-nota' }, o.nota) : null);
+  });
+  caixa.append(el('div', { class: 'orq-titulo' }, L.orqTitulo, el('span', { class: 'qtd' }, String(lista.length))),
+    el('div', { class: 'orq-grade' }, ...cartoes));
+}
+
 function desenhar() {
   desenharSino();
   const filtros = estado.filtros;
@@ -727,11 +851,8 @@ function desenhar() {
   let total = 0, feitasTotal = 0;
   for (const a of DADOS.assuntos) { total += a.tarefas.length; feitasTotal += progresso(a); }
 
-  const fixos = document.getElementById('fixos');
-  fixos.replaceChildren();
-  for (const f of (DADOS.fixos || []).filter((x) => !filtros.ia || x.ia === filtros.ia)) fixos.append(el('div', { class: 'tarefa vidro' },
-    el('div', { class: 'tcab' }, el('span', { class: 'ttl' }, f.titulo)),
-    el('p', {}, f.descricao), blocoPrompt(f)));
+  desenharOrquestradores();
+  desenharFixos(filtros);
 
   for (const g of GRUPOS) {
     const doGrupo = ordenados(g.id, DADOS.assuntos.filter((a) => grupoDe(a) === g.id));
@@ -818,7 +939,11 @@ function cartao(a) {
     let classe = '', selo;
     if (ok) selo = el('span', { class: 'selo ok' }, L.feita);
     else if (t.pr) selo = el('span', { class: 'selo trab', title: L.prAberta(ICONES[t.prompts?.[0]?.ia]?.nome || 'agent') }, L.prSelo(t.pr));
-    else if (t.trabalhando) selo = el('span', { class: 'selo trab' }, L.trab);
+    else if (t.trabalhando) {
+        const o = orqDaTarefa(t.id), e = o && estadoOrq(o, t.id);
+        selo = o ? el('span', { class: 'selo ' + (e === 'duvida' ? 'bloq' : 'trab'), title: L.orqTip + (o.pedido || o.id) },
+          (e === 'rodando' ? L.trab : ESTADOS_ORQ[e]) + ' · ' + L.orqSigla) : el('span', { class: 'selo trab' }, L.trab);
+      }
     else if (t.fila) { classe = faltam.length ? 'bloqueada' : ''; selo = el('span', { class: 'selo fila', title: L.filaTip(t.fila) },
       faltam.length ? L.filaEspera(faltam.join(', ')) : L.filaLiberada); }
     else if (faltam.length) { classe = 'bloqueada'; selo = el('span', { class: 'selo bloq' }, L.depende(faltam.join(', '))); }

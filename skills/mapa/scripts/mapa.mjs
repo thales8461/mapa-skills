@@ -163,6 +163,9 @@ function summary() {
     console.log(`${a.id} | ${grupoDe(a)} | ${feitas}/${t.length} | ${a.titulo}` +
       (trab.length ? ` | working: ${trab.join(' ')}` : '') + (a.revisado ? ` | reviewed ${a.revisado}` : '') + (a.pausa ? ` | paused: ${a.pausa}` : ''));
   }
+  const orq = dados.orquestradores || [];
+  if (orq.length) console.log(`ORCHESTRATORS: ${orq.length} working`);
+  for (const o of orq) console.log(`  ${o.id || '?'} | ${o.pedido || '?'} | ${(o.tarefas || []).join(' ')}${o.desde ? ` | since ${o.desde}` : ''}`);
   const apr = dados.aprovacoes || [];
   console.log(`BELL: ${apr.length} waiting for the user`);
   for (const i of apr) console.log(`  ${i.id || '?'} | ${i.titulo || '?'}${i.tarefa ? ` | ${i.tarefa}` : ''}${i.desde ? ` | since ${i.desde}` : ''}`);
@@ -198,6 +201,16 @@ function validate() {
     if (idsSino.has(i.id)) problemas.push(`repeated aprovacoes id: ${i.id}`);
     idsSino.add(i.id);
     if (i.tarefa && porId.get(i.tarefa)?.tarefa.feita) avisos.push(`aprovacoes ${i.id}: task ${i.tarefa} is already done (remove the item)`);
+  }
+  // orchestrators
+  const idsOrq = new Set();
+  for (const o of dados.orquestradores || []) {
+    if (!o.id || !Array.isArray(o.tarefas)) problemas.push(`orquestradores item without id or tarefas: ${o.id || '?'}`);
+    if (idsOrq.has(o.id)) problemas.push(`repeated orquestradores id: ${o.id}`);
+    idsOrq.add(o.id);
+    for (const id of o.tarefas || []) if (!porId.has(id)) avisos.push(`orquestradores ${o.id}: task ${id} is not in the map`);
+    for (const [id, e] of Object.entries(o.estados || {})) if (!['rodando', 'pronta', 'fim', 'duvida'].includes(e)) problemas.push(`orquestradores ${o.id}: invalid estado ${e} for ${id}`);
+    if ((o.tarefas || []).length && o.tarefas.every((id) => porId.get(id)?.tarefa.feita)) avisos.push(`orquestradores ${o.id}: every task is done (remove the entry)`);
   }
   // cycles
   const estado = new Map();

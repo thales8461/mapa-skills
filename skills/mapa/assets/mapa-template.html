@@ -336,10 +336,10 @@ const DADOS = {
   /* Orchestrators working: DADOS.orquestradores, written by the orquestrador skill. */
   #orquestradores { margin: 0 0 14px; }
   #orquestradores:empty { display: none; }
-  .orq-titulo { display: flex; align-items: center; gap: 8px; font-size: .72rem; text-transform: uppercase; letter-spacing: .08em; font-weight: 600; color: var(--suave); margin: 0 6px 8px; }
+  .orq-titulo { display: flex; align-items: center; gap: 8px; font-size: .72rem; text-transform: uppercase; letter-spacing: .08em; font-weight: 600; color: var(--suave); margin: 0 0 8px; padding-left: 2px; }
   .orq-titulo .qtd { font: 600 .72rem "JetBrains Mono", monospace; letter-spacing: 0; border-radius: 99px; padding: 1px 9px; background: var(--linha); color: var(--neon2); }
-  .orq-grade { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 10px; align-items: start; }
-  .orq { border-radius: 16px; padding: 12px 16px; border-color: color-mix(in srgb, var(--neon2) 35%, transparent); }
+  .orq-grade { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 10px; align-items: stretch; }
+  .orq { display: flex; flex-direction: column; border-radius: 16px; padding: 12px 16px; border-color: color-mix(in srgb, var(--neon2) 35%, transparent); }
   .orq.tem-duvida { border-color: color-mix(in srgb, var(--aviso) 60%, transparent); }
   .orq-cab { display: flex; align-items: center; gap: 8px; font-size: .9rem; min-width: 0; }
   .orq-cab b { font-weight: 600; flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
@@ -350,8 +350,8 @@ const DADOS = {
   .orq-linha .barra { flex: 1; height: 5px; }
   .orq-linha span { font-size: .76rem; color: var(--suave); font-weight: 600; white-space: nowrap; }
   .orq-resumo { margin: 4px 0 0; font-size: .76rem; color: var(--suave); }
-  .orq-chips { display: flex; flex-wrap: wrap; gap: 5px; margin-top: 8px; }
-  .orq-chip { --c: var(--suave); display: inline-flex; align-items: center; gap: 5px; font: 600 .72rem "JetBrains Mono", monospace; text-decoration: none; color: var(--c);
+  .orq-chips { display: grid; grid-template-columns: repeat(12, 1fr); gap: 6px; margin-top: 8px; }
+  .orq-chip { --c: var(--suave); display: inline-flex; align-items: center; justify-content: center; gap: 5px; font: 600 .72rem "JetBrains Mono", monospace; text-decoration: none; color: var(--c);
     border: 1px solid color-mix(in srgb, var(--c) 40%, transparent); background: color-mix(in srgb, var(--c) 10%, transparent); border-radius: 99px; padding: 1px 8px; }
   .orq-chip:hover { background: color-mix(in srgb, var(--c) 20%, transparent); }
   .orq-chip i { width: 6px; height: 6px; border-radius: 50%; background: var(--c); }
@@ -360,7 +360,7 @@ const DADOS = {
   .orq-chip.e-fim { --c: var(--primaria); border-style: dashed; }
   .orq-chip.e-duvida { --c: var(--aviso); }
   .orq-chip.e-feita { --c: var(--ok); opacity: .75; }
-  .orq-nota { margin: 8px 0 0; font-size: .78rem; color: var(--suave); border-top: 1px dashed var(--linha); padding-top: 6px; }
+  .orq-nota { margin: auto 0 0; min-height: 2lh; box-sizing: content-box; font-size: .78rem; color: var(--suave); border-top: 1px dashed var(--linha); padding-top: 6px; }
   [data-animacoes="off"] .orq-pulso, [data-animacoes="off"] .orq-chip i { animation: none; }
   @media (prefers-reduced-motion: reduce) { .orq-pulso, .orq-chip i { animation: none; } }
   @media (max-width: 640px) { .fixo-linha .cmd { display: none; } }
@@ -824,10 +824,17 @@ function desenharOrquestradores() {
       .map((e) => `${conta(e)} ${ESTADOS_ORQ[e].toLowerCase()}`).join(' · ');
     const barra = el('div', { class: 'barra' }, el('div'));
     barra.firstChild.style.width = (ids.length ? conta('feita') / ids.length * 100 : 0) + '%';
+    // Chips fill the card width: up to 4 per row, balanced rows, larger rows on top
+    // (5 = 3+2, 7 = 4+3, 9 = 3+3+3, 10 = 4+3+3). 12-column grid; each chip spans 12 / (chips in its row).
+    const linhas = Math.ceil(ids.length / 4), base = Math.floor(ids.length / linhas), sobra = ids.length % linhas;
+    const porLinha = Array.from({ length: linhas }, (_, l) => base + (l < sobra ? 1 : 0));
+    const vao = []; porLinha.forEach((k) => { for (let j = 0; j < k; j++) vao.push(12 / k); });
     const chips = ids.map((id, i) => {
       const achado = acharTarefa(id);
-      return el('a', { class: 'orq-chip e-' + est[i], href: achado ? '#' + achado.a.id : '#',
+      const chip = el('a', { class: 'orq-chip e-' + est[i], href: achado ? '#' + achado.a.id : '#',
         title: `${id}${achado ? ': ' + achado.t.titulo : ''} · ${ESTADOS_ORQ[est[i]]}` }, el('i'), id);
+      chip.style.gridColumn = 'span ' + vao[i];
+      return chip;
     });
     return el('div', { class: 'orq vidro' + (conta('duvida') ? ' tem-duvida' : '') },
       el('div', { class: 'orq-cab' }, el('span', { class: 'orq-pulso' }), el('b', { title: o.pedido || o.id }, o.pedido || o.id),

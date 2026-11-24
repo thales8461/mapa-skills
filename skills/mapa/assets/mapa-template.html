@@ -341,6 +341,9 @@ const DADOS = {
   .orq-grade { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 10px; align-items: stretch; }
   .orq { display: flex; flex-direction: column; border-radius: 16px; padding: 12px 16px; border-color: color-mix(in srgb, var(--neon2) 35%, transparent); }
   .orq.tem-duvida { border-color: color-mix(in srgb, var(--aviso) 60%, transparent); }
+  .orq[draggable="true"] { cursor: grab; }
+  .orq.alvo-esq { box-shadow: -4px 0 0 var(--neon1) !important; }
+  .orq.alvo-dir { box-shadow: 4px 0 0 var(--neon1) !important; }
   .orq-cab { display: flex; align-items: center; gap: 8px; font-size: .9rem; min-width: 0; }
   .orq-cab b { font-weight: 600; flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
   .orq-desde { color: var(--suave); font-size: .74rem; white-space: nowrap; }
@@ -447,7 +450,7 @@ const TEXTOS = {
     animacoes: 'Animações', ligadas: 'Ligadas', desligadas: 'Desligadas', autoAtualizar: 'Atualizar sozinho', desligado: 'Desligado',
     tema: 'Alternar tema claro/escuro', ocultar: 'Ocultar concluídas', livres: 'Só as que posso rodar agora', filtrarIa: 'Filtrar por IA',
     copiar: 'Copiar', copiado: 'Copiado!', modelo: 'Modelo', esforco: 'Esforço', subagentes: 'Subagentes', usaSub: 'Usa subagentes: ',
-    fixosTitulo: 'Skills e frases prontas', orqTitulo: 'Orquestradores trabalhando', orqDesde: 'desde', orqDe: 'de', orqSigla: 'orquestrador', orqTip: 'Orquestrador: ',
+    fixosTitulo: 'Skills e frases prontas', orqTitulo: 'Orquestradores trabalhando', orqDesde: 'desde', orqDe: 'de', orqSigla: 'orquestrador', orqTip: 'Orquestrador: ', orqArraste: 'Arraste para mudar a ordem',
     orqEstados: { rodando: 'Rodando', pronta: 'PR pronta', fim: 'Mesclar no fim', duvida: 'Dúvida', esperando: 'Esperando', feita: 'Mesclada' },
     gasto: 'Gasto', extremo: 'EXTREMAMENTE ALTO', gastoExtremo: 'Gasto estimado: acima de 30% do limite de 5 h',
     gastoTip: (n) => `Gasto estimado: ${n}/10 (cerca de ${n * 3}% do limite de 5 h)`,
@@ -484,7 +487,7 @@ const TEXTOS = {
     animacoes: 'Animations', ligadas: 'On', desligadas: 'Off', autoAtualizar: 'Auto refresh', desligado: 'Off',
     tema: 'Toggle light/dark theme', ocultar: 'Hide finished', livres: 'Only what I can run now', filtrarIa: 'Filter by AI',
     copiar: 'Copy', copiado: 'Copied!', modelo: 'Model', esforco: 'Effort', subagentes: 'Subagents', usaSub: 'Uses subagents: ',
-    fixosTitulo: 'Skills and ready-made lines', orqTitulo: 'Orchestrators working', orqDesde: 'since', orqDe: 'of', orqSigla: 'orchestrator', orqTip: 'Orchestrator: ',
+    fixosTitulo: 'Skills and ready-made lines', orqTitulo: 'Orchestrators working', orqDesde: 'since', orqDe: 'of', orqSigla: 'orchestrator', orqTip: 'Orchestrator: ', orqArraste: 'Drag to change the order',
     orqEstados: { rodando: 'Running', pronta: 'PR ready', fim: 'Merge at the end', duvida: 'Question', esperando: 'Waiting', feita: 'Merged' },
     gasto: 'Cost', extremo: 'EXTREMELY HIGH', gastoExtremo: 'Estimated cost: above 30% of the 5-hour limit',
     gastoTip: (n) => `Estimated cost: ${n}/10 (about ${n * 3}% of the 5-hour limit)`,
@@ -813,7 +816,10 @@ function estadoOrq(o, id) {
 const orqDaTarefa = (id) => (DADOS.orquestradores || []).find((o) => (o.tarefas || []).includes(id));
 function desenharOrquestradores() {
   const caixa = document.getElementById('orquestradores');
-  const lista = DADOS.orquestradores || [];
+  // Order dragged by the user, saved only in this browser; a new orchestrator goes to the end.
+  const pos = new Map((estado.orqOrdem || []).map((id, i) => [id, i]));
+  const lista = (DADOS.orquestradores || []).map((o, i) => [o, i])
+    .sort((a, b) => (pos.get(a[0].id) ?? 1e6 + a[1]) - (pos.get(b[0].id) ?? 1e6 + b[1])).map((x) => x[0]);
   caixa.replaceChildren();
   if (!lista.length) return;
   const cartoes = lista.map((o) => {
@@ -832,11 +838,12 @@ function desenharOrquestradores() {
     const chips = ids.map((id, i) => {
       const achado = acharTarefa(id);
       const chip = el('a', { class: 'orq-chip e-' + est[i], href: achado ? '#' + achado.a.id : '#',
-        title: `${id}${achado ? ': ' + achado.t.titulo : ''} · ${ESTADOS_ORQ[est[i]]}` }, el('i'), id);
+        title: `${id}${achado ? ': ' + achado.t.titulo : ''} · ${ESTADOS_ORQ[est[i]]}`, draggable: 'false' }, el('i'), id);
       chip.style.gridColumn = 'span ' + vao[i];
       return chip;
     });
-    return el('div', { class: 'orq vidro' + (conta('duvida') ? ' tem-duvida' : '') },
+    return el('div', { class: 'orq vidro' + (conta('duvida') ? ' tem-duvida' : ''), draggable: 'true', 'data-id': o.id,
+      title: L.orqArraste },
       el('div', { class: 'orq-cab' }, el('span', { class: 'orq-pulso' }), el('b', { title: o.pedido || o.id }, o.pedido || o.id),
         o.desde ? el('span', { class: 'orq-desde' }, L.orqDesde + ' ' + o.desde) : null),
       el('div', { class: 'orq-linha' }, barra, el('span', {}, `${conta('feita')} ${L.orqDe} ${ids.length}`)),
@@ -844,8 +851,43 @@ function desenharOrquestradores() {
       el('div', { class: 'orq-chips' }, ...chips),
       o.nota ? el('p', { class: 'orq-nota' }, o.nota) : null);
   });
-  caixa.append(el('div', { class: 'orq-titulo' }, L.orqTitulo, el('span', { class: 'qtd' }, String(lista.length))),
-    el('div', { class: 'orq-grade' }, ...cartoes));
+  const grade = el('div', { class: 'orq-grade' }, ...cartoes);
+  caixa.append(el('div', { class: 'orq-titulo' }, L.orqTitulo, el('span', { class: 'qtd' }, String(lista.length))), grade);
+  ligarArrastoOrq(grade, lista.map((o) => o.id));
+}
+
+// Drag the orchestrator cards: a line on the left or right of a card shows where the dragged one goes.
+function ligarArrastoOrq(grade, ids) {
+  let origem = null;
+  const limpar = () => grade.querySelectorAll('.alvo-esq, .alvo-dir').forEach((x) => x.classList.remove('alvo-esq', 'alvo-dir'));
+  grade.addEventListener('dragstart', (e) => {
+    const c = e.target.closest && e.target.closest('.orq');
+    if (!c) return;
+    origem = c; c.classList.add('arrastando');
+    e.dataTransfer.effectAllowed = 'move'; e.dataTransfer.setData('text/plain', c.dataset.id);
+  });
+  grade.addEventListener('dragover', (e) => {
+    if (!origem) return;
+    e.preventDefault(); limpar();
+    const c = e.target.closest && e.target.closest('.orq');
+    if (!c || c === origem) return;
+    const r = c.getBoundingClientRect();
+    c.classList.add(e.clientX > r.left + r.width / 2 ? 'alvo-dir' : 'alvo-esq');
+  });
+  grade.addEventListener('drop', (e) => {
+    if (!origem) return;
+    e.preventDefault();
+    const alvo = grade.querySelector('.alvo-esq, .alvo-dir');
+    if (alvo) {
+      const nova = ids.filter((id) => id !== origem.dataset.id);
+      let i = nova.indexOf(alvo.dataset.id);
+      if (alvo.classList.contains('alvo-dir')) i++;
+      nova.splice(i, 0, origem.dataset.id);
+      estado.orqOrdem = nova; gravar();
+    }
+    origem = null; desenharOrquestradores();
+  });
+  grade.addEventListener('dragend', () => { if (origem) origem.classList.remove('arrastando'); origem = null; limpar(); });
 }
 
 function desenhar() {

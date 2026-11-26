@@ -1,0 +1,456 @@
+<title>__TITULO__</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,700&family=Geist:wght@400;500;600&family=Geist+Mono:wght@500&display=swap">
+<!--
+  Question page template (mapa plugin). One page per person or team; the questions live in the
+  artifact database, so the page never needs to be republished to ask something new.
+  Placeholders, replaced before publishing:
+    __TITULO__   page title (2 to 4 words), e.g. "Finance questions"
+    __SETOR__    small label above the title, e.g. "Finance"
+    __IDIOMA__   'pt' or 'en' (language of the page texts)
+    __PAGINA__   JSON of this page: { "id": "finance", "nome": "Finance" }
+    __DESTINOS__ JSON list of every question page: [{ "id": "finance", "nome": "Finance" }, ...]
+                 (used by the option "I don't know, forward to"; this page is left out of the list)
+  Publish with the capabilities:
+    {"db":{"rules":[{"path":"assuntos","read":"view","write":"admin"},
+                    {"path":"perguntas","read":"view","write":"admin"},
+                    {"path":"respostas","read":"view","write":"interact"}]},
+     "user":{"scopes":["profile"]}}
+  Database schema: skills/mapa/references/perguntas.md.
+-->
+<style>
+/* Layout: one reading column; one collapsible menu per subject, questions stacked inside.
+   Light theme only. "Editorial" palette, 60-30-10 rule:
+   60% base (background and surfaces), 30% support (top band, subject bars, dialog header, fields),
+   10% accent (only action and attention: Save, "left" pill, progress, chosen option, question code). */
+:root {
+  color-scheme: light;
+  --bg: #FAF9F6; --card: #FFFFFF; --soft: #F5F4F1; --line: #E7E5E4; --fg: #1C1917; --muted: #57534E;
+  --sup: #E7E5E4; --sup-2: #DEDBD8; --sup-ink: #1C1917; --sup-muted: #57534E;
+  --accent: #0F4C5C; --accent-ink: #FFFFFF; --accent-soft: #E3EEF0;
+  --ok: #15803D; --ok-soft: color-mix(in srgb, #15803D 10%, var(--card));
+  --erro: #B91C1C;
+  --display: "Bricolage Grotesque", "Segoe UI", system-ui, sans-serif;
+  --body: "Geist", "Segoe UI", system-ui, sans-serif;
+  --mono: "Geist Mono", ui-monospace, Consolas, monospace;
+}
+body { background: var(--bg); color: var(--fg); font-family: var(--body); font-size: 15px; line-height: 1.55; }
+.pagina { max-width: 980px; margin: 0 auto; padding-block: 32px 64px; padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); display: grid; gap: 20px; }
+header { display: grid; gap: 6px; background: var(--sup); color: var(--sup-ink); border-radius: 16px; padding: 26px 26px 24px; }
+.selo { display: inline-flex; align-items: center; gap: 8px; font-size: .75rem; font-weight: 600; letter-spacing: .06em; text-transform: uppercase; color: var(--sup-ink); }
+.selo::before { content: ""; width: 10px; height: 10px; border-radius: 3px; background: var(--accent); }
+h1 { font-family: var(--display); font-size: clamp(1.7rem, 4vw, 2.3rem); line-height: 1.15; margin: 0; text-wrap: balance; }
+.sub { color: var(--sup-muted); margin: 0; }
+.barra { display: flex; flex-wrap: wrap; gap: 10px 16px; align-items: center; justify-content: space-between; background: var(--card); border: 1px solid var(--line); border-radius: 12px; padding: 12px 16px; }
+.contas { display: flex; flex-wrap: wrap; gap: 8px 18px; font-size: .9rem; }
+.contas b { font-family: var(--mono); font-variant-numeric: tabular-nums; }
+.contas .pend b { color: var(--accent); }
+.contas .resp b { color: var(--ok); }
+.filtro { display: inline-flex; align-items: center; gap: 8px; font-size: .9rem; cursor: pointer; }
+.filtro input { accent-color: var(--accent); width: 16px; height: 16px; }
+.progresso { flex-basis: 100%; width: 100%; height: 6px; border-radius: 999px; background: var(--soft); overflow: hidden; }
+.progresso > span { display: block; height: 100%; width: 0; border-radius: inherit; background: var(--accent); transition: width .8s cubic-bezier(.2, .7, .2, 1); }
+
+.assuntos { display: grid; gap: 12px; }
+details.assunto { background: var(--card); border: 1px solid var(--line); border-radius: 12px; overflow: hidden; transition: border-color .25s, box-shadow .25s; }
+details.assunto[open], details.assunto:hover { border-color: var(--sup); }
+details.assunto[open] { box-shadow: 0 10px 28px -16px rgba(28, 25, 23, .28); }
+details.assunto > summary { list-style: none; cursor: pointer; display: flex; gap: 12px; align-items: center; padding: 14px 16px; background: var(--sup); color: var(--sup-ink); transition: background-color .2s; }
+details.assunto > summary::-webkit-details-marker { display: none; }
+details.assunto > summary:hover { background: var(--sup-2); }
+details.assunto > summary:focus-visible { outline: 2px solid var(--accent); outline-offset: -2px; }
+.seta { flex: none; width: 18px; height: 18px; color: var(--sup-muted); transition: transform .3s cubic-bezier(.2, .7, .2, 1), color .2s; }
+details[open] > summary .seta { transform: rotate(90deg); color: var(--accent); }
+.a-titulo { flex: 1; min-width: 0; display: grid; gap: 2px; }
+.a-titulo strong { font-family: var(--display); font-size: 1.08rem; font-weight: 600; }
+.a-titulo span { color: var(--sup-muted); font-size: .85rem; }
+.pilula { flex: none; font-size: .75rem; font-weight: 600; border-radius: 999px; padding: 3px 10px; white-space: nowrap; transition: background-color .3s, color .3s; }
+.pilula.pend { background: var(--accent); color: var(--accent-ink); }
+.pilula.ok { background: var(--ok-soft); color: var(--ok); }
+.a-corpo { padding: 16px; display: grid; gap: 14px; }
+.a-desc { margin: 0; color: var(--muted); white-space: pre-line; }
+
+/* Priority badge of the subject. State colors, outside the 60-30-10 count. */
+.prio { flex: none; display: inline-flex; align-items: center; gap: 6px; font-size: .72rem; font-weight: 700; letter-spacing: .02em; border-radius: 999px; padding: 3px 10px; white-space: nowrap; border: 1px solid transparent; }
+.prio::before { content: ""; width: 7px; height: 7px; border-radius: 50%; background: currentColor; }
+.prio.baixa { color: #57534E; background: #F5F4F1; border-color: #E7E5E4; }
+.prio.media { color: #92400E; background: #FEF3C7; border-color: #FDE68A; }
+.prio.alta { color: #C2410C; background: #FFEDD5; border-color: #FDBA74; }
+.prio.urgente { color: #FFFFFF; background: var(--erro); white-space: normal; text-align: left; line-height: 1.25; }
+.prio.urgente::before { background: #FFFFFF; animation: pulsar 1.4s ease-in-out infinite; }
+@keyframes pulsar { 0%, 100% { opacity: 1; transform: scale(1); } 50% { opacity: .35; transform: scale(.7); } }
+details.assunto.urgente { border-color: var(--erro); box-shadow: 0 0 0 1px var(--erro) inset; }
+
+.pergunta { border: 1px solid var(--line); border-radius: 10px; padding: 16px; display: grid; gap: 12px; background: var(--card); transition: background-color .4s, border-color .4s; }
+.pergunta.respondida { background: var(--soft); }
+.pergunta.acabou { animation: acabou 1.1s ease-out; }
+@keyframes acabou { 0% { box-shadow: 0 0 0 0 color-mix(in srgb, var(--ok) 45%, transparent); border-color: var(--ok); } 100% { box-shadow: 0 0 0 14px transparent; } }
+.p-cab { display: flex; gap: 10px; align-items: baseline; }
+.p-cod { flex: none; font-family: var(--mono); font-size: .8rem; font-weight: 600; color: var(--accent); }
+.p-texto { margin: 0; font-weight: 600; min-width: 0; }
+.p-ctx { margin: 0; color: var(--muted); font-size: .92rem; white-space: pre-line; }
+.p-link a { color: var(--accent); font-size: .9rem; }
+.opcoes { display: grid; gap: 8px; border: 0; padding: 0; margin: 0; }
+.sr { position: absolute; left: -9999px; }
+.opcao { display: grid; grid-template-columns: auto 1fr; gap: 4px 10px; align-items: start; border: 1px solid var(--line); border-radius: 8px; padding: 10px 12px; cursor: pointer; background: var(--card); transition: border-color .2s, background-color .2s, transform .18s, box-shadow .2s; }
+.opcao:hover { transform: translateY(-1px); box-shadow: 0 4px 14px -10px rgba(28, 25, 23, .35); border-color: color-mix(in srgb, var(--accent) 35%, var(--line)); }
+.opcao:has(input:checked) { border-color: var(--accent); background: var(--accent-soft); box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent) 14%, transparent); }
+.opcao input { margin-top: 4px; accent-color: var(--accent); width: 16px; height: 16px; }
+.opcao .o-txt { min-width: 0; }
+.opcao .o-det { grid-column: 2; color: var(--muted); font-size: .86rem; white-space: pre-line; }
+.opcao.fixa { border-style: dashed; }
+.rec { display: inline-block; margin-left: 6px; font-size: .7rem; font-weight: 600; letter-spacing: .04em; text-transform: uppercase; color: var(--ok); background: var(--ok-soft); border-radius: 999px; padding: 1px 8px; vertical-align: 1px; }
+.extra { grid-column: 2; display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+select, textarea { font: inherit; color: var(--fg); background: var(--soft); border: 1px solid var(--line); border-radius: 8px; padding: 7px 10px; transition: border-color .2s, box-shadow .2s; }
+textarea:focus, select:focus { border-color: var(--accent); box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent) 14%, transparent); outline: none; }
+button:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }
+textarea { width: 100%; box-sizing: border-box; min-height: 64px; resize: vertical; }
+.obs label { font-size: .85rem; color: var(--muted); display: block; margin-bottom: 4px; }
+.acoes { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; }
+button.salvar { font: inherit; font-weight: 600; border: 0; border-radius: 8px; padding: 8px 16px; background: var(--accent); color: var(--accent-ink); cursor: pointer; transition: transform .15s, box-shadow .2s, opacity .2s; }
+button.salvar:disabled { opacity: .45; cursor: default; }
+button.salvar:not(:disabled):hover { transform: translateY(-1px); box-shadow: 0 6px 16px -8px var(--accent); }
+button.salvar:not(:disabled):active, button.ver-ctx:active, .ctx-fechar:active { transform: scale(.97); }
+.estado { font-size: .85rem; color: var(--muted); }
+.estado.ok { color: var(--ok); animation: subir .35s ease-out; }
+.estado.erro { color: var(--erro); }
+.vazio { background: var(--card); border: 1px dashed var(--line); border-radius: 12px; padding: 28px 20px; text-align: center; color: var(--muted); }
+.vazio strong { display: block; color: var(--fg); font-family: var(--display); font-size: 1.1rem; margin-bottom: 4px; }
+
+/* "See the context" button and the ~80% dialog. */
+button.ver-ctx { justify-self: start; font: inherit; font-size: .9rem; font-weight: 600; color: var(--fg); background: transparent; border: 1px solid var(--line); border-radius: 8px; padding: 6px 14px; cursor: pointer; transition: transform .15s, border-color .2s; }
+button.ver-ctx:hover { border-color: var(--fg); transform: translateY(-1px); }
+dialog.ctx { width: min(80vw, 1100px); height: 80vh; max-width: calc(100vw - 32px); max-height: calc(100vh - 32px); padding: 0; border: 1px solid var(--line); border-radius: 14px; background: var(--card); color: var(--fg); box-shadow: 0 24px 64px rgba(28, 25, 23, .28); }
+dialog.ctx[open] { display: flex; flex-direction: column; animation: surgir .28s cubic-bezier(.2, .7, .2, 1); }
+dialog.ctx::backdrop { background: rgba(28, 25, 23, .45); }
+dialog.ctx[open]::backdrop { animation: escurecer .28s ease-out; }
+.ctx-cab { flex: none; display: flex; gap: 12px; align-items: center; justify-content: space-between; padding: 16px 20px; background: var(--sup); color: var(--sup-ink); }
+.ctx-cab h2 { margin: 0; font-family: var(--display); font-size: 1.25rem; text-wrap: balance; }
+.ctx-fechar { flex: none; font: inherit; font-weight: 600; border: 1px solid var(--sup-muted); background: transparent; color: var(--sup-ink); border-radius: 8px; padding: 6px 12px; cursor: pointer; transition: transform .15s; }
+.ctx-corpo { flex: 1; min-height: 0; overflow: auto; padding: 20px; display: grid; align-content: start; gap: 12px; }
+.ctx-corpo h3 { margin: 10px 0 0; font-family: var(--display); font-size: 1.05rem; }
+.ctx-corpo p { margin: 0; white-space: pre-line; }
+.ctx-corpo ul { margin: 0; padding-left: 22px; display: grid; gap: 4px; }
+.ctx-corpo .nota { border-left: 3px solid var(--accent); background: var(--accent-soft); border-radius: 6px; padding: 10px 14px; white-space: pre-line; }
+.ctx-corpo pre { margin: 0; font-family: var(--mono); font-size: .82rem; background: var(--soft); border: 1px solid var(--line); border-radius: 8px; padding: 10px 12px; overflow-x: auto; white-space: pre; }
+.ctx-corpo .tab { overflow-x: auto; border: 1px solid var(--line); border-radius: 8px; }
+.ctx-corpo table { border-collapse: collapse; width: 100%; font-size: .88rem; }
+.ctx-corpo th, .ctx-corpo td { text-align: left; vertical-align: top; padding: 7px 10px; border-bottom: 1px solid var(--line); white-space: pre-line; }
+.ctx-corpo th { background: var(--soft); font-weight: 600; }
+.ctx-corpo tr:last-child td { border-bottom: 0; }
+.ctx-corpo td { font-variant-numeric: tabular-nums; }
+.ctx-corpo a { color: var(--accent); }
+
+/* Animations: staggered page entrance, subject opening (height slides where supported). */
+header > *, .barra, body.entrada details.assunto { animation: subir .55s cubic-bezier(.2, .7, .2, 1) both; animation-delay: calc(var(--e, 0) * 60ms); }
+@supports (interpolate-size: allow-keywords) {
+  :root { interpolate-size: allow-keywords; }
+  details.assunto::details-content { block-size: 0; overflow: hidden; transition: block-size .38s cubic-bezier(.2, .7, .2, 1), content-visibility .38s allow-discrete; }
+  details.assunto[open]::details-content { block-size: auto; }
+}
+details.assunto.abrindo .a-corpo > * { animation: subir .42s cubic-bezier(.2, .7, .2, 1) both; animation-delay: calc(var(--i, 0) * 45ms + 60ms); }
+@keyframes subir { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: none; } }
+@keyframes surgir { from { opacity: 0; transform: translateY(14px) scale(.985); } to { opacity: 1; transform: none; } }
+@keyframes escurecer { from { opacity: 0; } to { opacity: 1; } }
+@media (prefers-reduced-motion: reduce) {
+  .seta, details.assunto, details.assunto > summary, .opcao, button.salvar, button.ver-ctx, .progresso > span, .pergunta, .pilula, select, textarea { transition: none; }
+  header > *, .barra, body.entrada details.assunto, .pergunta.acabou, .estado.ok, .prio.urgente::before { animation: none; }
+  .opcao:hover, button.salvar:not(:disabled):hover, button.ver-ctx:hover { transform: none; }
+  details.assunto::details-content { transition: none; }
+  details.assunto.abrindo .a-corpo > *, dialog.ctx[open], dialog.ctx[open]::backdrop { animation: none; }
+}
+@media (max-width: 640px) { details.assunto > summary { flex-wrap: wrap; } .prio { order: 5; margin-left: 30px; } }
+@media (max-width: 520px) {
+  dialog.ctx { width: calc(100vw - 16px); height: 88vh; } .ctx-corpo { padding: 14px; }
+  .pilula { font-size: .7rem; padding: 2px 8px; } details.assunto > summary { padding: 12px; } .a-corpo, .pergunta { padding: 12px; }
+}
+</style>
+
+<div class="pagina">
+  <header>
+    <span class="selo" style="--e:0">__SETOR__</span>
+    <h1 style="--e:1">__TITULO__</h1>
+    <p class="sub" style="--e:2" id="sub"></p>
+  </header>
+  <div class="barra" style="--e:3">
+    <div class="contas" id="contas"></div>
+    <div class="progresso" role="progressbar" aria-valuemin="0" aria-valuemax="100" id="progresso"><span></span></div>
+    <label class="filtro" for="so-pendentes"><input type="checkbox" id="so-pendentes"> <span id="filtro-txt"></span></label>
+  </div>
+  <div class="assuntos" id="assuntos"></div>
+  <dialog class="ctx" id="ctx" aria-labelledby="ctx-titulo">
+    <div class="ctx-cab"><h2 id="ctx-titulo"></h2><button type="button" class="ctx-fechar" id="ctx-fechar"></button></div>
+    <div class="ctx-corpo" id="ctx-corpo"></div>
+  </dialog>
+</div>
+
+<script>
+const IDIOMA = '__IDIOMA__';
+const PAGINA = __PAGINA__;
+const DESTINOS = __DESTINOS__;
+
+const TEXTOS = {
+  pt: {
+    locale: 'pt-BR',
+    sub: 'Perguntas para você responder, separadas por assunto. Clique no assunto para abrir. Se uma pergunta não for sua, marque "Não sei, encaminhar para" e escolha quem deve responder.',
+    carregando: 'Carregando as perguntas...', filtro: 'Mostrar só as que faltam responder', progresso: 'Perguntas respondidas',
+    faltamResp: ' faltam responder', respondidas: ' respondidas', assunto: (n) => n === 1 ? ' assunto' : ' assuntos',
+    nenhuma: 'Nenhuma pergunta por enquanto', nenhumaDet: 'Quando alguém precisar de uma resposta sua, o assunto aparece aqui.',
+    tudo: 'Tudo respondido', tudoDet: 'Não falta nenhuma resposta. Desmarque o filtro para ver as respostas dadas.',
+    assuntoPadrao: 'Assunto', perguntas: (n) => n === 1 ? '1 pergunta' : `${n} perguntas`, desde: ' · desde ',
+    falta: (n) => n === 1 ? '1 falta' : `${n} faltam`, tudoPilula: 'Tudo respondido',
+    verContexto: 'Ver o contexto', contexto: 'Contexto', fechar: 'Fechar', material: 'Ver o material',
+    recomendado: 'Recomendado', naoSei: 'Não sei, encaminhar para:', encaminharPara: 'Encaminhar para', escolha: 'Escolha...',
+    outro: 'Outro', outroPh: 'Escreva a sua resposta', obs: 'Observação', obsPh: 'Opcional',
+    salvar: 'Salvar resposta', atualizar: 'Atualizar resposta', salvando: 'Salvando...',
+    respondidaEm: (d) => `Respondida em ${d}`, por: ' por ', as: ' às ',
+    semPermissao: 'Você não tem permissão para responder nesta página.', erroSalvar: 'Não foi possível salvar. Tente de novo.',
+    encaminhada: (n) => `Encaminhada para ${n}. Quem cuida do mapa decide se a pergunta vai para a página de lá.`,
+    semLogin: 'Não foi possível carregar. Entre com a sua conta e abra a página de novo.',
+    erroLer: 'Não foi possível ler as perguntas agora. Abra a página de novo em alguns minutos.',
+    prio: {
+      urgente: ['Urgente: desenvolvimento travado nessas pendências', 'Está travando uma tarefa ou um assunto, e não há mais nada para passar na frente.'],
+      alta: ['Prioridade alta', 'Precisamos para rodar a próxima tarefa, mas ainda dá para passar outras coisas na frente.'],
+      media: ['Prioridade média', 'Dá para resolver depois sem atrapalhar agora, ou é de uma fase 2.'],
+      baixa: ['Prioridade baixa', 'Módulo novo, só com o estudo feito ou nem isso.'],
+    },
+  },
+  en: {
+    locale: 'en',
+    sub: 'Questions for you to answer, grouped by subject. Click a subject to open it. If a question is not yours, choose "I don\'t know, forward to" and pick who should answer.',
+    carregando: 'Loading the questions...', filtro: 'Show only the unanswered ones', progresso: 'Questions answered',
+    faltamResp: ' left to answer', respondidas: ' answered', assunto: (n) => n === 1 ? ' subject' : ' subjects',
+    nenhuma: 'No questions for now', nenhumaDet: 'When someone needs an answer from you, the subject shows up here.',
+    tudo: 'All answered', tudoDet: 'Nothing is left to answer. Clear the filter to see the answers given.',
+    assuntoPadrao: 'Subject', perguntas: (n) => n === 1 ? '1 question' : `${n} questions`, desde: ' · since ',
+    falta: (n) => `${n} left`, tudoPilula: 'All answered',
+    verContexto: 'See the context', contexto: 'Context', fechar: 'Close', material: 'See the material',
+    recomendado: 'Recommended', naoSei: 'I don\'t know, forward to:', encaminharPara: 'Forward to', escolha: 'Choose...',
+    outro: 'Other', outroPh: 'Write your answer', obs: 'Note', obsPh: 'Optional',
+    salvar: 'Save answer', atualizar: 'Update answer', salvando: 'Saving...',
+    respondidaEm: (d) => `Answered on ${d}`, por: ' by ', as: ' at ',
+    semPermissao: 'You do not have permission to answer on this page.', erroSalvar: 'Could not save. Try again.',
+    encaminhada: (n) => `Forwarded to ${n}. The map owner decides whether the question moves to that page.`,
+    semLogin: 'Could not load. Sign in with your account and open the page again.',
+    erroLer: 'Could not read the questions now. Open the page again in a few minutes.',
+    prio: {
+      urgente: ['Urgent: development blocked by these pending items', 'It is blocking a task or a subject, and there is nothing else to work on first.'],
+      alta: ['High priority', 'Needed to run the next task, but other work can still go first.'],
+      media: ['Medium priority', 'Can be answered later without getting in the way now, or belongs to a phase 2.'],
+      baixa: ['Low priority', 'A new module with only a study done, or not even that.'],
+    },
+  },
+};
+const T = TEXTOS[IDIOMA] || TEXTOS.en;
+document.documentElement.lang = T.locale;
+
+const $ = (s) => document.querySelector(s);
+const el = (tag, attrs = {}, ...filhos) => {
+  const n = document.createElement(tag);
+  for (const [k, v] of Object.entries(attrs)) {
+    if (v == null || v === false) continue;
+    if (k === 'class') n.className = v; else if (k === 'text') n.textContent = v; else n.setAttribute(k, v === true ? '' : v);
+  }
+  for (const f of filhos) if (f != null) n.append(f);
+  return n;
+};
+// Per-viewer conveniences only (open subjects, filter); the answers live in the database.
+const guardado = (k, padrao) => { try { const v = localStorage.getItem(k); return v == null ? padrao : JSON.parse(v); } catch { return padrao; } };
+const guardar = (k, v) => { try { localStorage.setItem(k, JSON.stringify(v)); } catch {} };
+
+$('#sub').textContent = T.sub;
+$('#contas').replaceChildren(el('span', { text: T.carregando }));
+$('#progresso').setAttribute('aria-label', T.progresso);
+$('#filtro-txt').textContent = T.filtro;
+$('#ctx-titulo').textContent = T.contexto;
+$('#ctx-fechar').textContent = T.fechar;
+
+let assuntos = [], perguntas = [], respostas = {};
+const carregou = { a: false, p: false, r: false };
+let db = null, user = null, meuId = null, desenhou = false;
+const acabaram = new Set();
+const abertos = guardado('abertos', {});
+const rascunhos = {};
+const soPend = $('#so-pendentes');
+soPend.checked = guardado('soPendentes', false);
+soPend.addEventListener('change', () => { guardar('soPendentes', soPend.checked); desenhar(); });
+
+const SETA = '<svg class="seta" viewBox="0 0 20 20" aria-hidden="true"><path d="M7 4l6 6-6 6" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>';
+const fmtData = (iso) => { try { const d = new Date(iso); return d.toLocaleDateString(T.locale) + T.as + d.toLocaleTimeString(T.locale, { hour: '2-digit', minute: '2-digit' }); } catch { return ''; } };
+const nomeDestino = (id) => (DESTINOS.find((d) => d.id === id) || {}).nome || id;
+const linkSeguro = (u) => typeof u === 'string' && u.startsWith('https://') ? u : null;
+
+// Priority: urgente > alta > media > baixa; subjects without one count as media.
+const RANK = { urgente: 0, alta: 1, media: 2, baixa: 3 };
+const rankPrio = (a) => RANK[a.prioridade] ?? RANK.media;
+function seloPrioridade(p) {
+  const d = T.prio[p];
+  return d ? el('span', { class: 'prio ' + p, title: d[1], text: d[0] }) : null;
+}
+const ordenarAssuntos = (lista) => lista.sort((x, y) => rankPrio(x) - rankPrio(y) || (x.ordem ?? 0) - (y.ordem ?? 0) || String(x.id).localeCompare(String(y.id)));
+const ordenar = (lista) => lista.sort((x, y) => (x.ordem ?? 0) - (y.ordem ?? 0) || String(x.id).localeCompare(String(y.id)));
+
+function desenhar() {
+  const caixa = $('#assuntos');
+  if (!db || !(carregou.a && carregou.p && carregou.r)) return;
+  const totalP = perguntas.length, respondidas = perguntas.filter((p) => respostas[p.id]).length;
+  const pct = totalP ? Math.round(respondidas * 100 / totalP) : 0;
+  $('#progresso').setAttribute('aria-valuenow', String(pct));
+  requestAnimationFrame(() => { $('#progresso > span').style.width = pct + '%'; });
+  if (!desenhou) { desenhou = true; document.body.classList.add('entrada'); setTimeout(() => document.body.classList.remove('entrada'), 1600); }
+  $('#contas').replaceChildren(
+    el('span', { class: 'pend' }, el('b', { text: String(totalP - respondidas) }), T.faltamResp),
+    el('span', { class: 'resp' }, el('b', { text: String(respondidas) }), T.respondidas),
+    el('span', {}, el('b', { text: String(assuntos.length) }), T.assunto(assuntos.length)));
+  if (!assuntos.length) {
+    caixa.replaceChildren(el('div', { class: 'vazio' }, el('strong', { text: T.nenhuma }), T.nenhumaDet));
+    return;
+  }
+  const frag = [];
+  for (const a of assuntos) {
+    let lista = perguntas.filter((p) => p.assunto === a.id);
+    const falta = lista.filter((p) => !respostas[p.id]).length;
+    if (soPend.checked) lista = lista.filter((p) => !respostas[p.id]);
+    if (soPend.checked && !lista.length) continue;
+    const det = el('details', { class: 'assunto' + (a.prioridade === 'urgente' ? ' urgente' : ''), open: abertos[a.id] ?? false, style: `--e:${Math.min(frag.length + 3, 12)}` });
+    const corpo = el('div', { class: 'a-corpo' });
+    det.addEventListener('toggle', () => {
+      abertos[a.id] = det.open; guardar('abertos', abertos);
+      if (det.open) {
+        [...corpo.children].forEach((c, i) => c.style.setProperty('--i', Math.min(i, 8)));
+        det.classList.add('abrindo');
+        clearTimeout(det._fim); det._fim = setTimeout(() => det.classList.remove('abrindo'), 900);
+      } else det.classList.remove('abrindo');
+    });
+    const sum = el('summary');
+    sum.insertAdjacentHTML('afterbegin', SETA);
+    sum.append(
+      el('span', { class: 'a-titulo' }, el('strong', { text: a.titulo || T.assuntoPadrao }),
+        el('span', { text: T.perguntas(lista.length) + (a.criado ? T.desde + a.criado : '') })),
+      seloPrioridade(a.prioridade),
+      falta ? el('span', { class: 'pilula pend', text: T.falta(falta) }) : el('span', { class: 'pilula ok', text: T.tudoPilula }));
+    if (a.descricao) corpo.append(el('p', { class: 'a-desc', text: a.descricao }));
+    if (Array.isArray(a.contexto) && a.contexto.length) {
+      const b = el('button', { type: 'button', class: 'ver-ctx', text: T.verContexto });
+      b.addEventListener('click', () => abrirContexto(a));
+      corpo.append(b);
+    }
+    for (const p of lista) corpo.append(cartao(p));
+    det.append(sum, corpo);
+    frag.push(det);
+  }
+  caixa.replaceChildren(...(frag.length ? frag : [el('div', { class: 'vazio' }, el('strong', { text: T.tudo }), T.tudoDet)]));
+  nomesDosAutores();
+}
+
+function cartao(p) {
+  const r = respostas[p.id];
+  const rasc = rascunhos[p.id] || (rascunhos[p.id] = r ? { opcao: r.opcao, outro: r.outro || '', encaminhar: r.encaminhar || '', obs: r.obs || '' } : { opcao: '', outro: '', encaminhar: '', obs: '' });
+  const nome = 'p-' + String(p.id).replace(/[^\w-]/g, '_');
+  const card = el('article', { class: 'pergunta' + (r ? ' respondida' : '') + (r && acabaram.has(p.id) ? ' acabou' : '') });
+  if (r && acabaram.has(p.id)) acabaram.delete(p.id);
+  card.append(el('div', { class: 'p-cab' }, p.codigo ? el('span', { class: 'p-cod', text: p.codigo }) : null, el('p', { class: 'p-texto', text: p.texto || '' })));
+  if (p.contexto) card.append(el('p', { class: 'p-ctx', text: p.contexto }));
+  const plink = linkSeguro(p.link);
+  if (plink) card.append(el('p', { class: 'p-link' }, el('a', { href: plink, target: '_blank', rel: 'noopener', text: p.link_texto || T.material })));
+
+  const fs = el('fieldset', { class: 'opcoes' }, el('legend', { class: 'sr', text: p.texto || '' }));
+  const botao = el('button', { type: 'button', class: 'salvar', text: r ? T.atualizar : T.salvar });
+  const estado = el('span', { class: 'estado' });
+  const validar = () => {
+    botao.disabled = !(rasc.opcao && !(rasc.opcao === 'nao_sei' && !rasc.encaminhar) && !(rasc.opcao === 'outro' && !rasc.outro.trim()));
+  };
+  const radio = (valor, idx) => {
+    const i = el('input', { type: 'radio', name: nome, id: `${nome}-${idx}`, value: valor, checked: rasc.opcao === valor });
+    i.addEventListener('change', () => { rasc.opcao = valor; validar(); estado.textContent = ''; });
+    return i;
+  };
+  (p.opcoes || []).forEach((o, idx) => {
+    fs.append(el('label', { class: 'opcao', for: `${nome}-${idx}` }, radio(o.id, idx),
+      el('span', { class: 'o-txt' }, o.texto || '', o.recomendado ? el('span', { class: 'rec', text: T.recomendado }) : null),
+      o.detalhe ? el('span', { class: 'o-det', text: o.detalhe }) : null));
+  });
+  // Fixed option, always just before "Other": does not know and forwards to another page.
+  const destinos = DESTINOS.filter((d) => d.id !== PAGINA.id);
+  if (destinos.length) {
+    const sel = el('select', { id: `${nome}-dest`, 'aria-label': T.encaminharPara }, el('option', { value: '', text: T.escolha }),
+      ...destinos.map((d) => el('option', { value: d.id, text: d.nome, selected: rasc.encaminhar === d.id })));
+    sel.addEventListener('change', () => { rasc.encaminhar = sel.value; if (sel.value) { rasc.opcao = 'nao_sei'; fs.querySelector(`#${nome}-ns`).checked = true; } validar(); });
+    fs.append(el('label', { class: 'opcao fixa', for: `${nome}-ns` }, radio('nao_sei', 'ns'), el('span', { class: 'o-txt', text: T.naoSei }), el('span', { class: 'extra' }, sel)));
+  }
+  // Other: always the last option, free text.
+  const outro = el('textarea', { id: `${nome}-outro`, placeholder: T.outroPh, rows: '2' });
+  outro.value = rasc.outro;
+  outro.addEventListener('input', () => { rasc.outro = outro.value; if (outro.value.trim()) { rasc.opcao = 'outro'; fs.querySelector(`#${nome}-ot`).checked = true; } validar(); });
+  fs.append(el('label', { class: 'opcao fixa', for: `${nome}-ot` }, radio('outro', 'ot'), el('span', { class: 'o-txt', text: T.outro }), el('span', { class: 'extra', style: 'width:100%' }, outro)));
+  card.append(fs);
+
+  const obs = el('textarea', { id: `${nome}-obs`, rows: '2', placeholder: T.obsPh });
+  obs.value = rasc.obs;
+  obs.addEventListener('input', () => { rasc.obs = obs.value; validar(); });
+  card.append(el('div', { class: 'obs' }, el('label', { for: `${nome}-obs`, text: T.obs }), obs));
+
+  if (r) { estado.className = 'estado ok'; estado.dataset.autor = r.por || ''; estado.textContent = T.respondidaEm(fmtData(r.em)); }
+  botao.addEventListener('click', async () => {
+    botao.disabled = true; estado.className = 'estado'; estado.textContent = T.salvando;
+    const dado = { opcao: rasc.opcao, outro: rasc.opcao === 'outro' ? rasc.outro.trim() : '', encaminhar: rasc.opcao === 'nao_sei' ? rasc.encaminhar : '',
+      obs: rasc.obs.trim(), por: meuId || '', em: new Date().toISOString(), pergunta: p.texto || '' };
+    try { await db.collection('respostas').doc(p.id).set(dado); delete rascunhos[p.id]; acabaram.add(p.id); }
+    catch (e) { estado.className = 'estado erro'; estado.textContent = e && e.code === 'not_granted' ? T.semPermissao : T.erroSalvar; validar(); }
+  });
+  validar();
+  card.append(el('div', { class: 'acoes' }, botao, estado));
+  if (r && r.opcao === 'nao_sei' && r.encaminhar) card.append(el('p', { class: 'estado', text: T.encaminhada(nomeDestino(r.encaminhar)) }));
+  return card;
+}
+
+// Subject context: blocks written by the agent (h, p, lista, tabela, nota, codigo, link), always as text.
+const dlg = $('#ctx');
+$('#ctx-fechar').addEventListener('click', () => dlg.close());
+dlg.addEventListener('click', (e) => { if (e.target === dlg) dlg.close(); });
+function abrirContexto(a) {
+  $('#ctx-titulo').textContent = a.titulo || T.contexto;
+  const partes = [];
+  for (const b of a.contexto) {
+    if (!b || typeof b !== 'object') continue;
+    if (b.t === 'h') partes.push(el('h3', { text: b.texto || '' }));
+    else if (b.t === 'p') partes.push(el('p', { text: b.texto || '' }));
+    else if (b.t === 'nota') partes.push(el('div', { class: 'nota', text: b.texto || '' }));
+    else if (b.t === 'codigo') partes.push(el('pre', { text: b.texto || '' }));
+    else if (b.t === 'lista') partes.push(el('ul', {}, ...(b.itens || []).map((i) => el('li', { text: String(i) }))));
+    else if (b.t === 'tabela') partes.push(el('div', { class: 'tab' }, el('table', {},
+      b.cabecalho ? el('thead', {}, el('tr', {}, ...b.cabecalho.map((c) => el('th', { text: String(c) })))) : null,
+      el('tbody', {}, ...(b.linhas || []).map((l) => el('tr', {}, ...l.map((c) => el('td', { text: String(c ?? '') }))))))));
+    else if (b.t === 'link' && linkSeguro(b.url)) partes.push(el('p', {}, el('a', { href: b.url, target: '_blank', rel: 'noopener', text: b.texto || b.url })));
+  }
+  const corpo = $('#ctx-corpo');
+  corpo.replaceChildren(...partes);
+  corpo.scrollTop = 0;
+  if (typeof dlg.showModal === 'function') dlg.showModal(); else dlg.setAttribute('open', '');
+}
+
+async function nomesDosAutores() {
+  if (!user) return;
+  const nos = [...document.querySelectorAll('.estado[data-autor]')].filter((n) => n.dataset.autor);
+  const ids = [...new Set(nos.map((n) => n.dataset.autor))];
+  if (!ids.length) return;
+  try {
+    const ps = await user.profiles(ids);
+    for (const n of nos) { const nm = ps[n.dataset.autor] && ps[n.dataset.autor].name; if (nm && !n.textContent.includes(T.por)) n.textContent += T.por + nm; }
+  } catch {}
+}
+
+(async () => {
+  const falhou = () => $('#contas').replaceChildren(el('span', { text: T.semLogin }));
+  const limite = setTimeout(() => { if (!db) falhou(); }, 10000);
+  try { [db, user] = await Promise.all([window.claude.use('db'), window.claude.use('user')]); } catch {}
+  clearTimeout(limite);
+  if (!db) { falhou(); return; }
+  try { meuId = user ? await user.id() : null; } catch {}
+  const erro = () => $('#contas').replaceChildren(el('span', { text: T.erroLer }));
+  db.collection('assuntos').onSnapshot((s) => { assuntos = ordenarAssuntos(s.docs.map((d) => ({ id: d.id, ...d.data() })).filter((a) => !a.oculto)); carregou.a = true; desenhar(); }, erro);
+  db.collection('perguntas').onSnapshot((s) => { perguntas = ordenar(s.docs.map((d) => ({ id: d.id, ...d.data() }))); carregou.p = true; desenhar(); }, erro);
+  db.collection('respostas').onSnapshot((s) => { respostas = {}; for (const d of s.docs) respostas[d.id] = d.data(); carregou.r = true; desenhar(); }, erro);
+})();
+</script>

@@ -14,6 +14,9 @@
 //   check <id> [id...]              Exit 0 when every id is done (feita) or no longer in the map.
 //   finished <task-id>              Exit 0 when every task of that task's topic is done; tells whether
 //                                   the topic already has its revisao (review prompts).
+//   ready                           Tasks that can start now (not done, not working, no pr, fila or
+//                                   aguarda, topic not paused, every depende done), and apart the ones
+//                                   held back only by aguarda (waiting for an answer on an artifact).
 //
 // Map location (first that exists): --map <file>, env MAPA_FILE, "map" in .claude/mapa.json
 // (searched from the current folder upwards; relative paths are relative to the project root).
@@ -168,7 +171,10 @@ function summary() {
   for (const o of orq) console.log(`  ${o.id || '?'} | ${o.pedido || '?'} | ${(o.tarefas || []).join(' ')}${o.desde ? ` | since ${o.desde}` : ''}`);
   const apr = dados.aprovacoes || [];
   console.log(`BELL: ${apr.length} waiting for the user`);
-  for (const i of apr) console.log(`  ${i.id || '?'} | ${i.titulo || '?'}${i.tarefa ? ` | ${i.tarefa}` : ''}${i.desde ? ` | since ${i.desde}` : ''}`);
+  for (const i of apr) console.log(`  ${i.id || '?'} | ${i.titulo || '?'}${i.tipo ? ` | ${i.tipo}` : ''}${i.tarefa ? ` | ${i.tarefa}` : ''}${i.desde ? ` | since ${i.desde}` : ''}`);
+  const pag = dados.paginas || [];
+  if (pag.length) console.log(`PAGES: ${pag.length} question pages`);
+  for (const p of pag) console.log(`  ${p.nome || '?'} | ${p.url || '?'}`);
 }
 
 function validate() {
@@ -204,6 +210,16 @@ function validate() {
     if (idsSino.has(i.id)) problemas.push(`repeated aprovacoes id: ${i.id}`);
     idsSino.add(i.id);
     if (i.tarefa && porId.get(i.tarefa)?.tarefa.feita) avisos.push(`aprovacoes ${i.id}: task ${i.tarefa} is already done (remove the item)`);
+    if (i.tipo != null && i.tipo !== 'resposta') problemas.push(`aprovacoes ${i.id}: invalid tipo ${i.tipo} (only 'resposta')`);
+  }
+  // question pages
+  if (dados.paginas != null && !Array.isArray(dados.paginas)) problemas.push('paginas must be a list of { nome, url, descricao? }');
+  const nomesPag = new Set();
+  for (const p of Array.isArray(dados.paginas) ? dados.paginas : []) {
+    if (!p || !p.nome || !p.url) { problemas.push(`paginas item without nome or url: ${p?.nome || p?.url || '?'}`); continue; }
+    if (nomesPag.has(p.nome)) problemas.push(`repeated paginas nome: ${p.nome}`);
+    nomesPag.add(p.nome);
+    if (!/^https:\/\//.test(p.url)) avisos.push(`paginas ${p.nome}: url is not https (the map shows no Open link)`);
   }
   // orchestrators
   const idsOrq = new Set();
@@ -355,6 +371,30 @@ function finished(id) {
   console.log(`FINISHED: topic ${a.id} (${a.titulo}); revisao ${rev ? `ALREADY FILLED (${a.revisao.length})` : 'EMPTY'}${a.revisado ? `; reviewed ${a.revisado}` : ''}${a.pausa ? `; paused: ${a.pausa}` : ''}`);
 }
 
+function ready() {
+  const { arquivo, dados, porId } = carregar();
+  // An id no longer in the map counts as done, as everywhere else.
+  const pronta = (id) => !porId.has(id) || porId.get(id).tarefa.feita === true;
+  const livres = [], esperando = [];
+  for (const a of dados.assuntos || []) {
+    if (a.pausa) continue;
+    for (const t of a.tarefas || []) {
+      if (t.feita === true || t.trabalhando || t.pr || t.fila) continue;
+      if (!(t.depende || []).every(pronta)) continue;
+      const p = (t.prompts || [])[0] || {};
+      const linha = `${t.id} | ${a.titulo} | ${t.titulo}` + (p.ia ? ` | ${[p.ia, p.modelo, p.esforco].filter(Boolean).join(' ')}` : '') + (p.gasto != null ? ` | gasto ${p.gasto}` : '');
+      const aguarda = (t.aguarda || []).map((x) => x.nome);
+      if (aguarda.length) esperando.push(`${linha} | waits for: ${aguarda.join('; ')}`);
+      else livres.push(linha);
+    }
+  }
+  console.log(`MAP: ${arquivo}`);
+  console.log(`READY (${livres.length}):`);
+  for (const l of livres) console.log('  ' + l);
+  console.log(`WAITING ONLY FOR AN ANSWER (${esperando.length}):`);
+  for (const l of esperando) console.log('  ' + l);
+}
+
 const [comando, ...resto] = pos;
 switch (comando) {
   case 'init': init(resto[0]); break;
@@ -364,5 +404,6 @@ switch (comando) {
   case 'identify': identify(resto[0]); break;
   case 'check': check(resto); break;
   case 'finished': finished(resto[0]); break;
-  default: erro('commands: init | summary | validate | tasks | identify | check | finished (see the header of mapa.mjs)');
+  case 'ready': ready(); break;
+  default: erro('commands: init | summary | validate | tasks | identify | check | finished | ready (see the header of mapa.mjs)');
 }

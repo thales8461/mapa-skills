@@ -2,12 +2,13 @@
 
 [English](README.en.md)
 
-Oito skills para o Claude Code que organizam projetos em etapas pequenas (uma PR por tarefa) e deixam o Claude rodar várias tarefas sozinho.
+Nove skills para o Claude Code que organizam projetos em etapas pequenas (uma PR por tarefa) e deixam o Claude rodar várias tarefas sozinho.
 
 | Skill | Para quê |
 |---|---|
 | `/mapa` | Cria e mantém o **mapa** do projeto: um HTML com cada plano (assunto) dividido em tarefas, com o prompt pronto para copiar, a IA, o modelo, o esforço, o gasto estimado e as dependências. |
-| `sino` | Chamada **sozinha** quando algo fica esperando a sua aprovação ou resposta (relatório, protótipo, plano, PR para mesclar): acrescenta um item no **sino** do topo do mapa, com contador, e tira quando você responde. Se a espera trava uma tarefa, a tarefa ganha o selo "Depende do artifact" com o link da página. |
+| `sino` | Chamada **sozinha** quando algo fica esperando a sua aprovação ou resposta (relatório, protótipo, plano, PR para mesclar): acrescenta um item no **sino** do topo do mapa, com contador, e tira quando você responde. Se a espera trava uma tarefa, a tarefa ganha o selo "Depende do artifact" com o link da página. Perguntas vão como assunto numa das **páginas de perguntas** fixas. |
+| `/ler-artifact` | Lê as **páginas de perguntas**, grava na memória do projeto cada assunto respondido, libera as tarefas que esperavam por ele, troca o item do sino por um aviso de "respondido", pergunta o que fazer com os "Não sei, encaminhar para", apaga das páginas o que foi respondido (com a sua aprovação) e lista as tarefas que já podem começar. |
 | `/fila` | Você cola o prompt de uma tarefa e a sessão **espera** as dependências ficarem feitas no mapa antes de começar. |
 | `/pos` | `/pos A1` + o prompt da A2: a A2 só começa depois que a A1 for **mesclada**, mesmo sem depender dela (para rodar em sequência tarefas que poderiam ir em paralelo). |
 | `/planejamento` | Você manda vários prints e pedidos; o Claude **só anota** até você dizer que terminou, e aí planeja, perguntando o que não estiver claro. |
@@ -28,7 +29,7 @@ Requisitos: [Claude Code](https://claude.com/claude-code), Node.js 18+, git. O `
 /plugin install mapa@mapa-skills
 ```
 
-**Como skills soltas** (os comandos ficam `/mapa`, `/fila`...): copie as oito pastas de `skills/` para `~/.claude/skills/`. Mantenha todas juntas: `fila`, `pos`, `orquestrador`, `prompt-revisao` e `revisao` usam o script da pasta `mapa`.
+**Como skills soltas** (os comandos ficam `/mapa`, `/fila`...): copie as nove pastas de `skills/` para `~/.claude/skills/`. Mantenha todas juntas: `fila`, `pos`, `orquestrador`, `prompt-revisao`, `revisao` e `ler-artifact` usam o script da pasta `mapa`.
 
 ## Começar
 
@@ -59,6 +60,8 @@ Um arquivo HTML só, sem servidor. Os dados ficam no bloco `DADOS` (entre `// <m
 - Filtros por IA, "Só as que posso rodar agora", tema claro e escuro, ordem por arrastar.
 - O botão **Copiar** põe no começo do prompt a instrução para o agente marcar `trabalhando` e depois `feita`.
 - O botão **Marcar colado**, ao lado, marca (só no seu navegador, com data e hora) que você já colou aquele prompt na IA; clique de novo para desmarcar. Prompt reescrito volta desmarcado.
+- Atalhos no menu lateral: **Orquestradores** (contador vermelho com os que estão rodando), **Páginas de perguntas** (contador com os avisos de "respondido" do sino ainda não excluídos) e **Skills**; os dois últimos abrem a seção recolhida e rolam até ela.
+- No sino, o aviso de assunto respondido tem um ✕ que o exclui só no seu navegador.
 
 Script de apoio (só lê, nunca altera um mapa existente):
 
@@ -68,7 +71,23 @@ node skills/mapa/scripts/mapa.mjs summary
 node skills/mapa/scripts/mapa.mjs validate
 node skills/mapa/scripts/mapa.mjs tasks <pasta> "Meu assunto"
 node skills/mapa/scripts/mapa.mjs check EX1 EX2
+node skills/mapa/scripts/mapa.mjs ready
 ```
+
+`ready` lista as tarefas que já podem começar (dependências feitas, sem ninguém trabalhando, sem PR, fila nem `aguarda`, assunto fora de pausa) e, à parte, as que só esperam resposta de uma página.
+
+## Páginas de perguntas
+
+Em vez de um artifact novo para cada rodada de perguntas, o projeto tem poucas **páginas fixas**, uma por pessoa ou equipe (por exemplo Financeiro, Produto, Eu), feitas com [`skills/mapa/assets/perguntas-template.html`](skills/mapa/assets/perguntas-template.html) e listadas em `paginas` no mapa. As perguntas ficam no banco do artifact, então perguntar algo novo não exige publicar a página de novo.
+
+- Um menu recolhível por assunto, fechado ao abrir, em ordem de prioridade; dentro, as perguntas com opções, a recomendada marcada, "Não sei, encaminhar para: [outra página]" e "Outro" (texto livre), observação e botão "Ver o contexto".
+- Prioridade do assunto:
+  - **baixa**: módulo novo, só com o estudo feito ou nem isso;
+  - **média**: dá para esperar sem atrapalhar agora, ou é de uma fase 2;
+  - **alta**: precisa para rodar a próxima tarefa, mas outras coisas ainda podem passar na frente;
+  - **urgente**: aparece como "Urgente: desenvolvimento travado nessas pendências".
+- Como criar uma página, as permissões do banco e o formato: [`skills/mapa/references/perguntas.md`](skills/mapa/references/perguntas.md).
+- A skill `sino` põe as perguntas na página; `/ler-artifact` traz as respostas de volta.
 
 ## Licença
 

@@ -369,6 +369,12 @@ const DADOS = {
   .orq[draggable="true"] { cursor: grab; }
   .orq.alvo-esq { box-shadow: -4px 0 0 var(--neon1) !important; }
   .orq.alvo-dir { box-shadow: 4px 0 0 var(--neon1) !important; }
+  .orq.so-merge { position: relative; border-color: var(--ok); box-shadow: 0 0 0 1px var(--ok), 0 0 22px -6px var(--ok); }
+  .orq-merge { position: absolute; top: -10px; right: 14px; z-index: 2; display: inline-flex; align-items: center; gap: 6px; padding: 2px 10px 2px 8px; border-radius: 99px; background: var(--ok); color: #04140c; font-size: .7rem; font-weight: 700; letter-spacing: .02em; box-shadow: 0 4px 14px -4px var(--ok); }
+  .orq-merge i { width: 8px; height: 8px; border-radius: 50%; background: #04140c; animation: merge-pulso 1.3s ease-in-out infinite; }
+  @keyframes merge-pulso { 0%, 100% { transform: scale(1); opacity: 1; } 50% { transform: scale(.55); opacity: .4; } }
+  [data-animacoes="off"] .orq-merge i { animation: none; }
+  @media (prefers-reduced-motion: reduce) { .orq-merge i { animation: none; } }
   .orq-cab { display: flex; align-items: center; gap: 8px; font-size: .9rem; min-width: 0; }
   .orq-cab b { font-weight: 600; flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
   .orq-desde { color: var(--suave); font-size: .74rem; white-space: nowrap; }
@@ -482,7 +488,7 @@ const TEXTOS = {
     fixosTitulo: 'Skills e frases prontas', paginasTitulo: 'Páginas de perguntas', paginaAbrir: 'Abrir',
     latOrq: 'Orquestradores', latPag: 'Páginas de perguntas', latFix: 'Skills',
     latOrqTip: (n) => `${n} orquestrador(es) rodando`, latPagTip: (n) => `${n} assunto(s) respondido(s) no sino`,
-    sinoExcluir: 'Excluir este aviso (só neste navegador)', orqTitulo: 'Orquestradores trabalhando', orqDesde: 'desde', orqDe: 'de', orqSigla: 'orquestrador', orqTip: 'Orquestrador: ', orqArraste: 'Arraste para mudar a ordem',
+    sinoExcluir: 'Excluir este aviso (só neste navegador)', orqTitulo: 'Orquestradores trabalhando', orqDesde: 'desde', orqSoMerge: 'Só falta o merge', orqSoMergeTip: 'Só falta o merge: as PRs estão prontas', orqDe: 'de', orqSigla: 'orquestrador', orqTip: 'Orquestrador: ', orqArraste: 'Arraste para mudar a ordem',
     orqEstados: { rodando: 'Rodando', pronta: 'PR pronta', fim: 'Mesclar no fim', duvida: 'Dúvida', esperando: 'Esperando', feita: 'Mesclada' },
     gasto: 'Gasto', extremo: 'EXTREMAMENTE ALTO', gastoExtremo: 'Gasto estimado: acima de 30% do limite de 5 h',
     gastoTip: (n) => `Gasto estimado: ${n}/10 (cerca de ${n * 3}% do limite de 5 h)`,
@@ -523,7 +529,7 @@ const TEXTOS = {
     fixosTitulo: 'Skills and ready-made lines', paginasTitulo: 'Question pages', paginaAbrir: 'Open',
     latOrq: 'Orchestrators', latPag: 'Question pages', latFix: 'Skills',
     latOrqTip: (n) => `${n} orchestrator(s) running`, latPagTip: (n) => `${n} answered subject(s) in the bell`,
-    sinoExcluir: 'Dismiss this notice (only in this browser)', orqTitulo: 'Orchestrators working', orqDesde: 'since', orqDe: 'of', orqSigla: 'orchestrator', orqTip: 'Orchestrator: ', orqArraste: 'Drag to change the order',
+    sinoExcluir: 'Dismiss this notice (only in this browser)', orqTitulo: 'Orchestrators working', orqDesde: 'since', orqSoMerge: 'Only the merge left', orqSoMergeTip: 'Only the merge left: the PRs are ready', orqDe: 'of', orqSigla: 'orchestrator', orqTip: 'Orchestrator: ', orqArraste: 'Drag to change the order',
     orqEstados: { rodando: 'Running', pronta: 'PR ready', fim: 'Merge at the end', duvida: 'Question', esperando: 'Waiting', feita: 'Merged' },
     gasto: 'Cost', extremo: 'EXTREMELY HIGH', gastoExtremo: 'Estimated cost: above 30% of the 5-hour limit',
     gastoTip: (n) => `Estimated cost: ${n}/10 (about ${n * 3}% of the 5-hour limit)`,
@@ -948,8 +954,11 @@ function desenharOrquestradores() {
       chip.style.gridColumn = 'span ' + vao[i];
       return chip;
     });
-    return el('div', { class: 'orq vidro' + (conta('duvida') ? ' tem-duvida' : ''), draggable: 'true', 'data-id': o.id,
-      title: L.orqArraste },
+    // Only the merge left: every task not merged yet has its PR ready or waits for the merge at the end.
+    const soMerge = ids.length > 0 && est.every((e) => ['feita', 'pronta', 'fim'].includes(e)) && est.some((e) => e === 'pronta' || e === 'fim');
+    return el('div', { class: 'orq vidro' + (conta('duvida') ? ' tem-duvida' : '') + (soMerge ? ' so-merge' : ''), draggable: 'true', 'data-id': o.id,
+      title: soMerge ? L.orqSoMergeTip : L.orqArraste },
+      soMerge ? el('span', { class: 'orq-merge', title: L.orqSoMergeTip }, el('i'), L.orqSoMerge) : null,
       el('div', { class: 'orq-cab' }, el('span', { class: 'orq-pulso' }), el('b', { title: o.pedido || o.id }, o.pedido || o.id),
         o.desde ? el('span', { class: 'orq-desde' }, L.orqDesde + ' ' + o.desde) : null),
       el('div', { class: 'orq-linha' }, barra, el('span', {}, `${conta('feita')} ${L.orqDe} ${ids.length}`)),

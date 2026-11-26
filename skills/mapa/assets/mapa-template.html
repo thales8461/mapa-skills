@@ -514,7 +514,7 @@ const TEXTOS = {
     vazioFiltros: 'Nenhuma tarefa com esses filtros.', vazio: 'Nenhum assunto em andamento.',
     contaGeral: (f, t) => `${f} de ${t} tarefas`, deN: (n, t) => `${n} de ${t}`, etapasArraste: (n, t) => `${n} de ${t} etapas · arraste para reposicionar`,
     rodape: (d) => `Atualizado pelo agente em ${d}. Uma tarefa "Feita" que não dá para desmarcar foi registrada depois do merge; as outras marcações, a ordem e os grupos abertos ficam salvos só neste navegador.`,
-    emPausa: 'Em pausa', emPausaDe: 'Em pausa: ', arraste: 'Arraste para reposicionar',
+    emPausa: 'Em pausa', emPausaDe: 'Em pausa: ', emPausaResp: 'Em pausa: respostas', esperandoResp: 'esperando as respostas: ', arraste: 'Arraste para reposicionar',
     feita: 'Feita', feitaOk: '✓ Feita', marcar: 'Marcar como feita', registrada: 'Registrada depois do merge',
     prAberta: (ia) => `PR aberta pelo ${ia}; falta a revisão e o merge`, prSelo: (n) => `PR #${n} · revisão`,
     filaTip: (d) => 'Sessão do /fila esperando as dependências; na fila desde ' + d,
@@ -555,7 +555,7 @@ const TEXTOS = {
     vazioFiltros: 'No task matches these filters.', vazio: 'No topic in progress.',
     contaGeral: (f, t) => `${f} of ${t} tasks`, deN: (n, t) => `${n} of ${t}`, etapasArraste: (n, t) => `${n} of ${t} steps · drag to reorder`,
     rodape: (d) => `Updated by the agent on ${d}. A "Done" task that cannot be unchecked was recorded after the merge; other checkmarks, the order and the open groups are saved only in this browser.`,
-    emPausa: 'Paused', emPausaDe: 'Paused: ', arraste: 'Drag to reorder',
+    emPausa: 'Paused', emPausaDe: 'Paused: ', emPausaResp: 'Paused: answers', esperandoResp: 'waiting for the answers: ', arraste: 'Drag to reorder',
     feita: 'Done', feitaOk: '✓ Done', marcar: 'Mark as done', registrada: 'Recorded after the merge',
     prAberta: (ia) => `PR opened by ${ia}; waiting for review and merge`, prSelo: (n) => `PR #${n} · review`,
     filaTip: (d) => 'A /fila session is waiting for the dependencies; queued since ' + d,
@@ -724,8 +724,28 @@ const GRUPOS = [
   { id: 'nao', aberto: true }, { id: 'dev', aberto: true }, { id: 'rev', aberto: true },
   { id: 'ok', aberto: false }, { id: 'pausa', aberto: false },
 ].map((g) => ({ ...g, nome: L.grupos[g.id] }));
+// Automatic pause: when every remaining task of a topic waits for an answer on a question page (aguarda) or
+// depends on one that does, and nothing is working, has a PR or is queued, the topic shows as paused until the
+// answers arrive; once aguarda is removed it goes back to in development by itself. The pausa field is not used.
+function pausaPorPagina(a) {
+  const faltam = a.tarefas.filter((t) => !feita(a, t));
+  if (!faltam.length || faltam.some((t) => t.trabalhando || t.pr || t.fila)) return '';
+  const porId = new Map(a.tarefas.map((t) => [t.id, t]));
+  const memo = new Map();
+  const presa = (t) => {
+    if (memo.has(t.id)) return memo.get(t.id);
+    memo.set(t.id, false);
+    const r = (t.aguarda || []).length > 0 || (t.depende || []).some((d) => { const x = porId.get(d); return x && !feita(a, x) && presa(x); });
+    memo.set(t.id, r);
+    return r;
+  };
+  if (!faltam.every(presa)) return '';
+  const nomes = [...new Set(faltam.flatMap((t) => (t.aguarda || []).map((x) => x.nome)))];
+  return nomes.length ? L.esperandoResp + nomes.join('; ') : '';
+}
+const pausaDe = (a) => a.pausa || pausaPorPagina(a);
 function grupoDe(a) {
-  if (a.pausa) return 'pausa';
+  if (pausaDe(a)) return 'pausa';
   if (a.revisado) return 'ok';
   const n = progresso(a);
   if (n === 0) return a.tarefas.some((t) => t.trabalhando || t.pr) ? 'dev' : 'nao';
@@ -1061,7 +1081,7 @@ function desenhar() {
     for (const a of doGrupo) {
       const n = progresso(a), tot = a.tarefas.length;
       const link = el('a', { href: '#' + a.id, draggable: 'true', 'data-id': a.id, 'data-grupo': g.id, 'data-titulo': semAcento(a.titulo),
-        title: a.pausa ? L.emPausaDe + a.pausa : L.etapasArraste(n, tot) },
+        title: pausaDe(a) ? L.emPausaDe + pausaDe(a) : L.etapasArraste(n, tot) },
         el('span', { class: 'nome' }, a.titulo), el('div', { class: 'mini' }, el('div')));
       link.querySelector('.mini > div').style.width = (tot ? n / tot * 100 : 0) + '%';
       links.append(link);
@@ -1112,7 +1132,7 @@ const PEGA = '<svg viewBox="0 0 10 16" aria-hidden="true"><circle cx="2.5" cy="3
 function cartao(a) {
   const filtros = estado.filtros;
   const n = progresso(a), tot = a.tarefas.length, fim = concluido(a);
-  const aberto = estado.abertos[a.id] ?? !(fim || a.pausa);
+  const aberto = estado.abertos[a.id] ?? !(fim || pausaDe(a));
 
   const card = el('section', { id: a.id, 'data-id': a.id, 'data-grupo': grupoDe(a), 'data-titulo': semAcento(a.titulo),
     class: 'assunto vidro' + (fim ? ' concluido' : '') + (aberto ? ' aberto' : '') });
@@ -1122,13 +1142,13 @@ function cartao(a) {
   card.addEventListener('dragend', () => { card.draggable = false; });
   const topo = el('button', { type: 'button', class: 'topo', 'aria-expanded': String(aberto) },
     el('h2', {}, a.titulo),
-    a.pausa ? el('span', { class: 'selo bloq pausa-selo', title: a.pausa }, L.emPausa) : el('span'),
+    pausaDe(a) ? el('span', { class: 'selo bloq pausa-selo', title: pausaDe(a) }, a.pausa ? L.emPausa : L.emPausaResp) : el('span'),
     el('span', { class: 'seta', html: '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m6 9 6 6 6-6"/></svg>' }),
     el('div', { class: 'linha' }, barraAssunto(a), el('span', {}, L.deN(n, tot))));
   topo.addEventListener('click', () => { estado.abertos[a.id] = !card.classList.contains('aberto'); gravar(); desenhar(); });
 
   const corpo = el('div', { class: 'corpo' },
-    a.pausa ? el('p', { class: 'pausa-nota' }, L.emPausaDe + a.pausa) : null,
+    pausaDe(a) ? el('p', { class: 'pausa-nota' }, L.emPausaDe + pausaDe(a)) : null,
     el('p', { class: 'desc' }, a.descricao || ''));
   let proximaMarcada = false, visiveis = 0;
   for (const t of a.tarefas) {

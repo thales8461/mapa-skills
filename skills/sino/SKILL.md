@@ -29,13 +29,22 @@ Inside `aprovacoes: [ ... ]`, one object per item:
 - `titulo`: one line, what the user must decide. `detalhe`: one sentence. `tarefa` and `link`: optional.
 - `desde`: `dd/mm hh:mm`.
 
+## Badge on the task that waits for an artifact
+When the item names a `tarefa` and the wait is for an artifact (question page, report, mockup), also write on that task:
+
+```js
+aguarda: [{ nome: 'Questions to the tax team (Q11 to Q13)', url: 'https://...' }],
+```
+
+The map shows "Depends on artifact <nome>" with the name as a link (opens in a new tab) and blocks the task like `depende`. When you remove the bell item, remove the answered part of `aguarda` too (the whole field when it gets empty). This is a task change, so update `atualizado`.
+
 ## When to remove
 As soon as the user answers (approved, adjusted or refused). When a task is marked `feita`, remove the items that name it in `tarefa`. An item with no answer for days: mention it in the next conversation and ask if it still applies.
 
 ## How to write
 The map is edited by many sessions.
 1. Read only the `aprovacoes:` lines right before the edit (for example `grep -n -A 12 "aprovacoes:"`), not the whole file.
-2. Change only the `aprovacoes` array. Do not touch `atualizado` (the bell is not a map change).
+2. Change only the `aprovacoes` array (and the task's `aguarda`, see above). The bell alone does not touch `atualizado`; `aguarda` does.
 3. If the edit fails because the file changed, read the lines again and retry.
 4. Put no personal or client data in `titulo` or `detalhe`.
 5. `node <mapa skill>/scripts/mapa.mjs validate` after editing; `summary` prints the `BELL:` lines.

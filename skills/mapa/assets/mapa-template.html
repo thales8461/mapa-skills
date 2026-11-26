@@ -281,6 +281,8 @@ const DADOS = {
   @keyframes pulsa { 50% { box-shadow: 0 0 14px rgb(34 227 255 / .6); } }
   .selo.livre { background: var(--primaria-fundo); color: var(--primaria); }
   .selo.bloq { background: var(--aviso-fundo); color: var(--aviso); }
+  .selo .selo-link { color: inherit; text-decoration: underline; text-underline-offset: 2px; cursor: pointer; }
+  .selo .selo-link:hover { text-decoration-thickness: 2px; }
   .selo.ok { background: var(--ok-fundo); color: var(--ok); }
   .selo.trab { background: var(--neon2); color: #fff; box-shadow: 0 0 8px var(--neon2); animation: pulsa 2.4s ease-in-out infinite; }
   .g-trab { --cor-grupo: var(--neon2); }
@@ -472,7 +474,8 @@ const TEXTOS = {
     prAberta: (ia) => `PR aberta pelo ${ia}; falta a revisão e o merge`, prSelo: (n) => `PR #${n} · revisão`,
     filaTip: (d) => 'Sessão do /fila esperando as dependências; na fila desde ' + d,
     filaEspera: (ids) => 'Na fila · espera ' + ids, filaLiberada: 'Na fila · liberada',
-    depende: (ids) => 'Depende de ' + ids, proxima: 'Próxima', paralelo: 'Pode rodar em paralelo',
+    depende: (ids) => 'Depende de ' + ids, proxima: 'Próxima',
+    dependeIni: 'Depende ', dependeTarefas: (ids) => 'de ' + ids, dependeArtifact: 'do artifact ', e: ' e ', artifactTip: 'Abrir o artifact em outra aba', paralelo: 'Pode rodar em paralelo',
     revisao: (r) => `Revisão final (${r})`, revisada: (r, d) => `Revisão do ${r} feita em ${d}. O assunto sai do mapa numa próxima atualização.`,
     pedirRevisao: (r) => `Assunto concluído. Peça ao agente os prompts de revisão do ${r}; depois da revisão, o assunto vai para Concluídos.`,
     aviso: (id, alvo, ia) => `Nome da aba: se a sua ferramenta permitir, renomeie esta sessão para "${id}".\n\n` + (ia === 'claude'
@@ -509,7 +512,8 @@ const TEXTOS = {
     prAberta: (ia) => `PR opened by ${ia}; waiting for review and merge`, prSelo: (n) => `PR #${n} · review`,
     filaTip: (d) => 'A /fila session is waiting for the dependencies; queued since ' + d,
     filaEspera: (ids) => 'Queued · waits for ' + ids, filaLiberada: 'Queued · ready',
-    depende: (ids) => 'Depends on ' + ids, proxima: 'Next', paralelo: 'Can run in parallel',
+    depende: (ids) => 'Depends on ' + ids, proxima: 'Next',
+    dependeIni: 'Depends on ', dependeTarefas: (ids) => ids, dependeArtifact: 'artifact ', e: ' and ', artifactTip: 'Open the artifact in a new tab', paralelo: 'Can run in parallel',
     revisao: (r) => `Final review (${r})`, revisada: (r, d) => `${r} review done on ${d}. The topic leaves the map in a later update.`,
     pedirRevisao: (r) => `Topic finished. Ask the agent for the ${r} review prompts; after the review the topic moves to Done.`,
     aviso: (id, alvo, ia) => `Tab name: if your tool allows it, rename this session to "${id}".\n\n` + (ia === 'claude'
@@ -985,6 +989,7 @@ function cartao(a) {
   for (const t of a.tarefas) {
     const ok = feita(a, t);
     const faltam = (t.depende || []).filter((d) => { for (const b of DADOS.assuntos) { const x = b.tarefas.find((y) => y.id === d); if (x) return !feita(b, x); } return false; });
+    const aguarda = ok ? [] : (t.aguarda || []);
     let classe = '', selo;
     if (ok) selo = el('span', { class: 'selo ok' }, L.feita);
     else if (t.pr) selo = el('span', { class: 'selo trab', title: L.prAberta(ICONES[t.prompts?.[0]?.ia]?.nome || 'agent') }, L.prSelo(t.pr));
@@ -995,7 +1000,14 @@ function cartao(a) {
       }
     else if (t.fila) { classe = faltam.length ? 'bloqueada' : ''; selo = el('span', { class: 'selo fila', title: L.filaTip(t.fila) },
       faltam.length ? L.filaEspera(faltam.join(', ')) : L.filaLiberada); }
-    else if (faltam.length) { classe = 'bloqueada'; selo = el('span', { class: 'selo bloq' }, L.depende(faltam.join(', '))); }
+    else if (faltam.length || aguarda.length) {
+      // "Depends on" badge: map tasks and, with aguarda, the artifact (clickable link, opens in a new tab).
+      classe = 'bloqueada';
+      const partes = [...(faltam.length ? [L.dependeTarefas(faltam.join(', '))] : []),
+        ...aguarda.map((x) => [L.dependeArtifact, el('a', { class: 'selo-link', href: x.url, target: '_blank', rel: 'noopener', title: L.artifactTip }, x.nome)])];
+      selo = el('span', { class: 'selo bloq' }, L.dependeIni);
+      partes.forEach((p, i) => { if (i) selo.append(i === partes.length - 1 ? L.e : ', '); selo.append(...[].concat(p)); });
+    }
     else if (!proximaMarcada) { classe = 'proxima'; proximaMarcada = true; selo = el('span', { class: 'selo proxima' }, L.proxima); }
     else selo = el('span', { class: 'selo livre' }, L.paralelo);
 
@@ -1007,7 +1019,7 @@ function cartao(a) {
       gravar(); desenhar();
     });
 
-    if ((filtros.ocultar && ok) || (filtros.livres && (ok || faltam.length)) || !temIA(t, filtros.ia)) continue;
+    if ((filtros.ocultar && ok) || (filtros.livres && (ok || faltam.length || aguarda.length)) || !temIA(t, filtros.ia)) continue;
     visiveis++;
     const tarefa = el('div', { class: 'tarefa ' + (ok ? 'feita ' : '') + classe },
       el('div', { class: 'tcab' }, el('span', { class: 'id' }, t.id), el('span', { class: 'ttl' }, t.titulo), selo, btn));

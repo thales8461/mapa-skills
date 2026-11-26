@@ -7,7 +7,7 @@ Eight Claude Code skills that organize a project in small steps (one pull reques
 | Skill | What for |
 |---|---|
 | `/mapa` | Creates and keeps the project **map**: one HTML file with each plan (topic) split into tasks, each with a ready-to-copy prompt, the AI, the model, the effort, the estimated cost and its dependencies. |
-| `sino` | Runs **on its own** when something waits for your approval or answer (report, mockup, plan, PR to merge): adds an item to the **bell** at the top of the map, with a counter, and removes it when you answer. |
+| `sino` | Runs **on its own** when something waits for your approval or answer (report, mockup, plan, PR to merge): adds an item to the **bell** at the top of the map, with a counter, and removes it when you answer. When the wait blocks a task, the task gets the "Depends on artifact" badge with the page link. |
 | `/fila` | You paste a task prompt and the session **waits** until its dependencies are done in the map before starting. |
 | `/pos` | `/pos A1` + the A2 prompt: A2 starts only after A1 is **merged**, even without depending on it (to run in sequence tasks that could run in parallel). |
 | `/planejamento` | You send many screenshots and change requests; Claude **only takes notes** until you say you are done, then plans, asking about anything unclear. |

@@ -34,6 +34,7 @@ Before starting, show the plan in a few lines: waves, model and effort of each t
 The top of the map shows each running orchestrator from `DADOS.orquestradores`. Re-read the lines right before each edit and touch only this session's entry.
 - **At the start** (after showing the plan): add `{ id: 'orq-<ddmm-hhmm>', pedido: '<topic or ids, short>', desde: 'dd/mm hh:mm', tarefas: [<pending ids>], estados: {}, nota: '<next step, short>' }`. Write the `id` in the orchestrator ESTADO.md.
 - **`estados`** only when the status does not come from the task itself: `'pronta'` (PR reviewed, waiting for "can I merge?"), `'fim'` (in the "merge at the end" list), `'duvida'` (waiting for the user). Remove the key when that status ends. Running, merged and waiting come from `trabalhando` and `feita`.
+- **`mudou`**: `'dd/mm hh:mm'` of the last change to `estados` (entering or leaving a question, PR ready, merge at the end); write it with every change of `estados`. The map uses it for the card badge: **Stalled** (red) when a question has waited 24 h or more, **Pending** (yellow) for a newer question, **Only the merge left** (green) and **Working** (blue).
 - **`nota`**: update it when what the user needs to know changes (e.g. "Question on A8: which layout"; "Waiting for the merge of #15").
 - **At the end** (step 8, nothing running and nothing waiting): remove the entry. If the session stops with a question or a merge pending, the entry stays, with the `nota` saying what.
 

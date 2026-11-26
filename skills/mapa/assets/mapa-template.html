@@ -61,7 +61,7 @@ const DADOS = {
   paginas: [],
   // Orchestrators: /orquestrador sessions running now, shown at the top. The skill adds
   // { id: 'orq-ddmm-hhmm', pedido, desde: 'dd/mm hh:mm', tarefas: [ids], estados: { <id>: 'rodando' |
-  // 'pronta' | 'fim' | 'duvida' }, nota? } when it starts and removes it when it ends; see the orquestrador skill.
+  // 'pronta' | 'fim' | 'duvida' }, nota?, mudou?: 'dd/mm hh:mm' (last status change) } when it starts and removes it when it ends; see the orquestrador skill.
   orquestradores: [],
   fixos: [],
   assuntos: [
@@ -369,12 +369,21 @@ const DADOS = {
   .orq[draggable="true"] { cursor: grab; }
   .orq.alvo-esq { box-shadow: -4px 0 0 var(--neon1) !important; }
   .orq.alvo-dir { box-shadow: 4px 0 0 var(--neon1) !important; }
-  .orq.so-merge { position: relative; border-color: var(--ok); box-shadow: 0 0 0 1px var(--ok), 0 0 22px -6px var(--ok); }
-  .orq-merge { position: absolute; top: -10px; right: 14px; z-index: 2; display: inline-flex; align-items: center; gap: 6px; padding: 2px 10px 2px 8px; border-radius: 99px; background: var(--ok); color: #04140c; font-size: .7rem; font-weight: 700; letter-spacing: .02em; box-shadow: 0 4px 14px -4px var(--ok); }
-  .orq-merge i { width: 8px; height: 8px; border-radius: 50%; background: #04140c; animation: merge-pulso 1.3s ease-in-out infinite; }
-  @keyframes merge-pulso { 0%, 100% { transform: scale(1); opacity: 1; } 50% { transform: scale(.55); opacity: .4; } }
-  [data-animacoes="off"] .orq-merge i { animation: none; }
-  @media (prefers-reduced-motion: reduce) { .orq-merge i { animation: none; } }
+  .orq { position: relative; }
+  .orq.s-merge { border-color: var(--ok); box-shadow: 0 0 0 1px var(--ok), 0 0 22px -6px var(--ok); }
+  .orq.s-pendencia { border-color: var(--aviso); box-shadow: 0 0 0 1px var(--aviso), 0 0 22px -8px var(--aviso); }
+  .orq.s-parado { border-color: #e5484d; box-shadow: 0 0 0 1px #e5484d, 0 0 24px -6px #e5484d; }
+  .orq.s-rodando { border-color: #3b82f6; box-shadow: 0 0 0 1px #3b82f6, 0 0 22px -8px #3b82f6; }
+  .orq-selo { position: absolute; top: -10px; right: 14px; z-index: 2; display: inline-flex; align-items: center; gap: 6px; padding: 2px 10px 2px 8px; border-radius: 99px; font-size: .7rem; font-weight: 700; letter-spacing: .02em; white-space: nowrap; }
+  .orq-selo i { width: 8px; height: 8px; border-radius: 50%; background: currentColor; }
+  .orq-selo.s-merge { background: var(--ok); color: #04140c; box-shadow: 0 4px 14px -4px var(--ok); }
+  .orq-selo.s-pendencia { background: var(--aviso); color: #1f1400; box-shadow: 0 4px 14px -4px var(--aviso); }
+  .orq-selo.s-parado { background: #e5484d; color: #fff; box-shadow: 0 4px 14px -4px #e5484d; }
+  .orq-selo.s-rodando { background: #3b82f6; color: #fff; box-shadow: 0 4px 14px -4px #3b82f6; }
+  .orq-selo.s-merge i, .orq-selo.s-parado i, .orq-selo.s-pendencia i { animation: selo-pulso 1.3s ease-in-out infinite; }
+  @keyframes selo-pulso { 0%, 100% { transform: scale(1); opacity: 1; } 50% { transform: scale(.55); opacity: .4; } }
+  [data-animacoes="off"] .orq-selo i { animation: none; }
+  @media (prefers-reduced-motion: reduce) { .orq-selo i { animation: none; } }
   .orq-cab { display: flex; align-items: center; gap: 8px; font-size: .9rem; min-width: 0; }
   .orq-cab b { font-weight: 600; flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
   .orq-desde { color: var(--suave); font-size: .74rem; white-space: nowrap; }
@@ -488,7 +497,7 @@ const TEXTOS = {
     fixosTitulo: 'Skills e frases prontas', paginasTitulo: 'Páginas de perguntas', paginaAbrir: 'Abrir',
     latOrq: 'Orquestradores', latPag: 'Páginas de perguntas', latFix: 'Skills',
     latOrqTip: (n) => `${n} orquestrador(es) rodando`, latPagTip: (n) => `${n} assunto(s) respondido(s) no sino`,
-    sinoExcluir: 'Excluir este aviso (só neste navegador)', orqTitulo: 'Orquestradores trabalhando', orqDesde: 'desde', orqSoMerge: 'Só falta o merge', orqSoMergeTip: 'Só falta o merge: as PRs estão prontas', orqDe: 'de', orqSigla: 'orquestrador', orqTip: 'Orquestrador: ', orqArraste: 'Arraste para mudar a ordem',
+    sinoExcluir: 'Excluir este aviso (só neste navegador)', orqTitulo: 'Orquestradores trabalhando', orqDesde: 'desde', orqSoMerge: 'Só falta o merge', orqSoMergeTip: 'Só falta o merge: as PRs estão prontas', orqPendencia: 'Pendência', orqPendenciaTip: 'Esperando a sua resposta', orqParado: (q) => `Parado há ${q}`, orqParadoTip: (q, d) => `Esperando a sua resposta há ${q} (desde ${d})`, orqRodando: 'Trabalhando', orqRodandoTip: 'Orquestrador trabalhando', orqDias: (n) => `${n} dias`, orqHoras: (n) => `${n} h`, orqDe: 'de', orqSigla: 'orquestrador', orqTip: 'Orquestrador: ', orqArraste: 'Arraste para mudar a ordem',
     orqEstados: { rodando: 'Rodando', pronta: 'PR pronta', fim: 'Mesclar no fim', duvida: 'Dúvida', esperando: 'Esperando', feita: 'Mesclada' },
     gasto: 'Gasto', extremo: 'EXTREMAMENTE ALTO', gastoExtremo: 'Gasto estimado: acima de 30% do limite de 5 h',
     gastoTip: (n) => `Gasto estimado: ${n}/10 (cerca de ${n * 3}% do limite de 5 h)`,
@@ -529,7 +538,7 @@ const TEXTOS = {
     fixosTitulo: 'Skills and ready-made lines', paginasTitulo: 'Question pages', paginaAbrir: 'Open',
     latOrq: 'Orchestrators', latPag: 'Question pages', latFix: 'Skills',
     latOrqTip: (n) => `${n} orchestrator(s) running`, latPagTip: (n) => `${n} answered subject(s) in the bell`,
-    sinoExcluir: 'Dismiss this notice (only in this browser)', orqTitulo: 'Orchestrators working', orqDesde: 'since', orqSoMerge: 'Only the merge left', orqSoMergeTip: 'Only the merge left: the PRs are ready', orqDe: 'of', orqSigla: 'orchestrator', orqTip: 'Orchestrator: ', orqArraste: 'Drag to change the order',
+    sinoExcluir: 'Dismiss this notice (only in this browser)', orqTitulo: 'Orchestrators working', orqDesde: 'since', orqSoMerge: 'Only the merge left', orqSoMergeTip: 'Only the merge left: the PRs are ready', orqPendencia: 'Pending', orqPendenciaTip: 'Waiting for your answer', orqParado: (q) => `Stalled for ${q}`, orqParadoTip: (q, d) => `Waiting for your answer for ${q} (since ${d})`, orqRodando: 'Working', orqRodandoTip: 'Orchestrator working', orqDias: (n) => `${n} days`, orqHoras: (n) => `${n} h`, orqDe: 'of', orqSigla: 'orchestrator', orqTip: 'Orchestrator: ', orqArraste: 'Drag to change the order',
     orqEstados: { rodando: 'Running', pronta: 'PR ready', fim: 'Merge at the end', duvida: 'Question', esperando: 'Waiting', feita: 'Merged' },
     gasto: 'Cost', extremo: 'EXTREMELY HIGH', gastoExtremo: 'Estimated cost: above 30% of the 5-hour limit',
     gastoTip: (n) => `Estimated cost: ${n}/10 (about ${n * 3}% of the 5-hour limit)`,
@@ -924,6 +933,31 @@ function estadoOrq(o, id) {
   return achado && (achado.t.trabalhando || achado.t.pr) ? 'rodando' : 'esperando';
 }
 const orqDaTarefa = (id) => (DADOS.orquestradores || []).find((o) => (o.tarefas || []).includes(id));
+// Card badge: Stalled (red, a question for 24 h or more), Pending (yellow, waiting for the user),
+// Only the merge left (green) or Working (blue). Stalled time counts from `mudou` (last status change,
+// written by the orquestrador skill) or, without it, from `desde`.
+function dataDoMapa(txt) {
+  const m = /^(\d{1,2})\/(\d{1,2})(?:\s+(\d{1,2}):(\d{2}))?/.exec(String(txt || '').trim());
+  if (!m) return null;
+  const agora = new Date();
+  const d = new Date(agora.getFullYear(), +m[2] - 1, +m[1], m[3] ? +m[3] : 0, m[4] ? +m[4] : 0);
+  if (d - agora > 864e5) d.setFullYear(d.getFullYear() - 1);
+  return d;
+}
+function seloOrq(o, est) {
+  if (est.includes('duvida')) {
+    const d = dataDoMapa(o.mudou || o.desde);
+    const horas = d ? (Date.now() - d) / 36e5 : 0;
+    if (horas >= 24) {
+      const q = horas >= 48 ? L.orqDias(Math.floor(horas / 24)) : L.orqHoras(Math.floor(horas));
+      return { tipo: 'parado', texto: L.orqParado(q), dica: L.orqParadoTip(q, o.mudou || o.desde) };
+    }
+    return { tipo: 'pendencia', texto: L.orqPendencia, dica: L.orqPendenciaTip };
+  }
+  if (est.length && est.every((e) => ['feita', 'pronta', 'fim'].includes(e)) && est.some((e) => e === 'pronta' || e === 'fim'))
+    return { tipo: 'merge', texto: L.orqSoMerge, dica: L.orqSoMergeTip };
+  return { tipo: 'rodando', texto: L.orqRodando, dica: L.orqRodandoTip };
+}
 function desenharOrquestradores() {
   const caixa = document.getElementById('orquestradores');
   // Order dragged by the user, saved only in this browser; a new orchestrator goes to the end.
@@ -954,11 +988,10 @@ function desenharOrquestradores() {
       chip.style.gridColumn = 'span ' + vao[i];
       return chip;
     });
-    // Only the merge left: every task not merged yet has its PR ready or waits for the merge at the end.
-    const soMerge = ids.length > 0 && est.every((e) => ['feita', 'pronta', 'fim'].includes(e)) && est.some((e) => e === 'pronta' || e === 'fim');
-    return el('div', { class: 'orq vidro' + (conta('duvida') ? ' tem-duvida' : '') + (soMerge ? ' so-merge' : ''), draggable: 'true', 'data-id': o.id,
-      title: soMerge ? L.orqSoMergeTip : L.orqArraste },
-      soMerge ? el('span', { class: 'orq-merge', title: L.orqSoMergeTip }, el('i'), L.orqSoMerge) : null,
+    const selo = seloOrq(o, est);
+    return el('div', { class: 'orq vidro' + (conta('duvida') ? ' tem-duvida' : '') + ' s-' + selo.tipo, draggable: 'true', 'data-id': o.id,
+      title: selo.dica + ' · ' + L.orqArraste },
+      el('span', { class: 'orq-selo s-' + selo.tipo, title: selo.dica }, el('i'), selo.texto),
       el('div', { class: 'orq-cab' }, el('span', { class: 'orq-pulso' }), el('b', { title: o.pedido || o.id }, o.pedido || o.id),
         o.desde ? el('span', { class: 'orq-desde' }, L.orqDesde + ' ' + o.desde) : null),
       el('div', { class: 'orq-linha' }, barra, el('span', {}, `${conta('feita')} ${L.orqDe} ${ids.length}`)),

@@ -91,6 +91,8 @@ Instead of a new artifact for every round of questions, the project keeps a few 
 - How to create a page, the database permissions and the format: [`skills/mapa/references/perguntas.md`](skills/mapa/references/perguntas.md).
 - The `sino` skill puts the questions on the page; `/ler-artifact` brings the answers back.
 
+When every remaining task of a map topic waits for an answer on a page (directly or through a dependency) and nothing is working, the topic moves to **Paused: answers** by itself, and goes back to **In development** when the answers arrive.
+
 ## License
 
 [MIT](LICENSE)

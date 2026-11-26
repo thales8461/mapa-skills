@@ -89,6 +89,8 @@ Em vez de um artifact novo para cada rodada de perguntas, o projeto tem poucas *
 - Como criar uma página, as permissões do banco e o formato: [`skills/mapa/references/perguntas.md`](skills/mapa/references/perguntas.md).
 - A skill `sino` põe as perguntas na página; `/ler-artifact` traz as respostas de volta.
 
+Quando toda tarefa que falta num assunto do mapa espera resposta de uma página (direto ou por dependência) e nada está rodando, o assunto vai sozinho para **Em pausa: respostas**, e volta para **Em desenvolvimento** quando as respostas chegam.
+
 ## Licença
 
 [MIT](LICENSE)

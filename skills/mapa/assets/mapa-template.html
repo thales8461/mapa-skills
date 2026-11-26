@@ -885,12 +885,22 @@ function desenharPaginas() {
   }
   caixa.append(el('div', { class: 'fixos-sec vidro g-dev' + (aberto ? ' aberto' : '') }, cab, corpo));
 }
-// Sidebar shortcuts to the collapsible sections: open the section and scroll to it.
-for (const [id, chave, alvo] of [['lat-pag-link', 'paginasAberto', 'paginas'], ['lat-fix-link', 'fixosAberto', 'fixos']]) {
+// Scrolls to a section leaving room for the sticky header, so the section is not hidden behind it.
+function rolarAte(alvoId) {
+  const alvo = document.getElementById(alvoId);
+  if (!alvo) return;
+  const cab = document.querySelector('.cabecalho');
+  const fixo = cab && getComputedStyle(cab).position === 'sticky';
+  const folga = fixo ? cab.getBoundingClientRect().height + 16 + 12 : 12;
+  const topo = alvo.getBoundingClientRect().top + window.scrollY - folga;
+  window.scrollTo({ top: Math.max(0, topo), behavior: 'smooth' });
+}
+// Sidebar shortcuts: the orchestrators panel and the collapsible sections (opened before scrolling).
+for (const [id, chave, alvo] of [['lat-orq-link', null, 'orquestradores'], ['lat-pag-link', 'paginasAberto', 'paginas'], ['lat-fix-link', 'fixosAberto', 'fixos']]) {
   document.getElementById(id).addEventListener('click', (e) => {
     e.preventDefault();
-    if (!estado[chave]) { estado[chave] = true; gravar(); desenhar(); }
-    document.getElementById(alvo).scrollIntoView({ behavior: 'smooth', block: 'start' });
+    if (chave && !estado[chave]) { estado[chave] = true; gravar(); desenhar(); }
+    requestAnimationFrame(() => rolarAte(alvo));
   });
 }
 

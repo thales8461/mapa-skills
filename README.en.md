@@ -60,6 +60,7 @@ One HTML file, no server. The data lives in the `DADOS` block (between `// <mapa
 - Task badges: Next, Can run in parallel, Depends on..., Working, Queued, PR open, Done.
 - Filter by AI, "Only what I can run now", light and dark theme, drag to reorder.
 - The **Copy** button prepends the instruction for the agent to mark `trabalhando` and later `feita`.
+- The **Mark pasted** button next to it records (only in your browser, with date and time) that you already pasted that prompt into the AI; click again to unmark. A rewritten prompt comes back unmarked.
 
 Helper script (read-only, never changes an existing map):
 

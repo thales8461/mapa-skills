@@ -58,6 +58,7 @@ Um arquivo HTML só, sem servidor. Os dados ficam no bloco `DADOS` (entre `// <m
 - Selos por tarefa: Próxima, Pode rodar em paralelo, Depende de..., Trabalhando, Na fila, PR aberta, Feita.
 - Filtros por IA, "Só as que posso rodar agora", tema claro e escuro, ordem por arrastar.
 - O botão **Copiar** põe no começo do prompt a instrução para o agente marcar `trabalhando` e depois `feita`.
+- O botão **Marcar colado**, ao lado, marca (só no seu navegador, com data e hora) que você já colou aquele prompt na IA; clique de novo para desmarcar. Prompt reescrito volta desmarcado.
 
 Script de apoio (só lê, nunca altera um mapa existente):
 

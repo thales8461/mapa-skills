@@ -288,7 +288,10 @@ const DADOS = {
   .g-trab { --cor-grupo: var(--neon2); }
   .selo.fila { background: color-mix(in srgb, var(--neon3) 14%, transparent); color: var(--neon3); border: 1px dashed var(--neon3); cursor: help; }
   .g-fila { --cor-grupo: var(--neon3); }
-  .feito-btn, .copiar { font: inherit; font-size: .76rem; font-weight: 600; border: 1px solid var(--vidro-borda); background: var(--vidro-forte); color: var(--texto); border-radius: 9px; padding: 4px 10px; cursor: pointer; transition: all .2s; }
+  .colado-btn { margin-right: 6px; }
+  .colado-btn:hover { border-color: var(--ok); color: var(--ok); }
+  .colado-btn.on { background: var(--ok-fundo); color: var(--ok); border-color: var(--ok); }
+  .feito-btn, .copiar, .colado-btn { font: inherit; font-size: .76rem; font-weight: 600; border: 1px solid var(--vidro-borda); background: var(--vidro-forte); color: var(--texto); border-radius: 9px; padding: 4px 10px; cursor: pointer; transition: all .2s; }
   .feito-btn:hover { border-color: var(--ok); color: var(--ok); box-shadow: 0 0 14px -2px var(--ok); }
   .feito-btn.on { background: var(--ok-fundo); color: var(--ok); border-color: var(--ok); }
   .feito-btn:disabled { cursor: default; box-shadow: none; }
@@ -451,7 +454,7 @@ const TEXTOS = {
     sino: 'Aguardando a sua aprovação', sinoTitulo: 'Esperando você', sinoVazio: 'Nada esperando a sua aprovação.', sinoDesde: 'desde', sinoAbrir: 'Abrir',
     animacoes: 'Animações', ligadas: 'Ligadas', desligadas: 'Desligadas', autoAtualizar: 'Atualizar sozinho', desligado: 'Desligado',
     tema: 'Alternar tema claro/escuro', ocultar: 'Ocultar concluídas', livres: 'Só as que posso rodar agora', filtrarIa: 'Filtrar por IA',
-    copiar: 'Copiar', copiado: 'Copiado!', modelo: 'Modelo', esforco: 'Esforço', subagentes: 'Subagentes', usaSub: 'Usa subagentes: ',
+    copiar: 'Copiar', copiado: 'Copiado!', marcarColado: 'Marcar colado', colado: '✓ Colado ', coladoDica: 'Marcar que já colei este prompt na IA (fica só neste navegador)', modelo: 'Modelo', esforco: 'Esforço', subagentes: 'Subagentes', usaSub: 'Usa subagentes: ',
     fixosTitulo: 'Skills e frases prontas', orqTitulo: 'Orquestradores trabalhando', orqDesde: 'desde', orqDe: 'de', orqSigla: 'orquestrador', orqTip: 'Orquestrador: ', orqArraste: 'Arraste para mudar a ordem',
     orqEstados: { rodando: 'Rodando', pronta: 'PR pronta', fim: 'Mesclar no fim', duvida: 'Dúvida', esperando: 'Esperando', feita: 'Mesclada' },
     gasto: 'Gasto', extremo: 'EXTREMAMENTE ALTO', gastoExtremo: 'Gasto estimado: acima de 30% do limite de 5 h',
@@ -489,7 +492,7 @@ const TEXTOS = {
     sino: 'Waiting for your approval', sinoTitulo: 'Waiting for you', sinoVazio: 'Nothing is waiting for your approval.', sinoDesde: 'since', sinoAbrir: 'Open',
     animacoes: 'Animations', ligadas: 'On', desligadas: 'Off', autoAtualizar: 'Auto refresh', desligado: 'Off',
     tema: 'Toggle light/dark theme', ocultar: 'Hide finished', livres: 'Only what I can run now', filtrarIa: 'Filter by AI',
-    copiar: 'Copy', copiado: 'Copied!', modelo: 'Model', esforco: 'Effort', subagentes: 'Subagents', usaSub: 'Uses subagents: ',
+    copiar: 'Copy', copiado: 'Copied!', marcarColado: 'Mark pasted', colado: '✓ Pasted ', coladoDica: 'Mark that this prompt was already pasted into the AI (kept only in this browser)', modelo: 'Model', esforco: 'Effort', subagentes: 'Subagents', usaSub: 'Uses subagents: ',
     fixosTitulo: 'Skills and ready-made lines', orqTitulo: 'Orchestrators working', orqDesde: 'since', orqDe: 'of', orqSigla: 'orchestrator', orqTip: 'Orchestrator: ', orqArraste: 'Drag to change the order',
     orqEstados: { rodando: 'Running', pronta: 'PR ready', fim: 'Merge at the end', duvida: 'Question', esperando: 'Waiting', feita: 'Merged' },
     gasto: 'Cost', extremo: 'EXTREMELY HIGH', gastoExtremo: 'Estimated cost: above 30% of the 5-hour limit',
@@ -618,7 +621,27 @@ function avisoMapa(p, a, t) {
   const id = `${t.id}`.replace(/['"`$]/g, '').trim();
   return L.aviso(id, L.alvo(t.id, a.titulo, DADOS.caminho), p.ia);
 }
-function blocoPrompt(p, a, t) {
+// "Pasted" button: marks, only in this browser, that the prompt was already pasted into the AI.
+// Key = task (or "rev") + AI + hash of the text: a rewritten prompt comes back unmarked.
+function hashTexto(s) { let h = 5381; for (let i = 0; i < s.length; i++) h = ((h << 5) + h + s.charCodeAt(i)) | 0; return (h >>> 0).toString(36); }
+function botaoColado(p, a, t) {
+  estado.colados = estado.colados || {};
+  const chave = (a && t ? chaveTarefa(a, t) : 'rev') + '#' + p.ia + '#' + hashTexto(p.texto);
+  const b = el('button', { type: 'button', class: 'colado-btn', title: L.coladoDica });
+  const pintar = () => {
+    const quando = estado.colados[chave];
+    b.classList.toggle('on', !!quando);
+    b.textContent = quando ? L.colado + quando : L.marcarColado;
+  };
+  b.addEventListener('click', () => {
+    if (estado.colados[chave]) delete estado.colados[chave];
+    else { const d = new Date(), z = (n) => String(n).padStart(2, '0'); estado.colados[chave] = `${z(d.getDate())}/${z(d.getMonth() + 1)} ${z(d.getHours())}:${z(d.getMinutes())}`; }
+    gravar(); pintar();
+  });
+  pintar();
+  return b;
+}
+function blocoPrompt(p, a, t, colavel = true) {
   const ia = ICONES[p.ia] || { nome: String(p.ia), svg: '' };
   const botao = el('button', { type: 'button', class: 'copiar' }, L.copiar);
   botao.addEventListener('click', () => copiar((a && t ? avisoMapa(p, a, t) : '') + p.texto, botao));
@@ -629,7 +652,7 @@ function blocoPrompt(p, a, t) {
       p.subagentes ? el('span', { class: 'subag', title: L.usaSub + p.subagentes, html: ICONE_SUBAG + L.subagentes }) : null,
       p.gasto != null ? seloGasto(p.gasto) : null,
       seloTempo(p),
-      el('span', { class: 'esp' }), botao),
+      el('span', { class: 'esp' }), colavel ? botaoColado(p, a, t) : null, botao),
     el('pre', {}, p.texto));
 }
 
@@ -799,7 +822,7 @@ function desenharFixos(filtros) {
     abrir.addEventListener('click', () => { estado.fixoAberto[f.titulo] = !ab; gravar(); desenhar(); });
     corpo.append(el('div', { class: 'fixo' + (ab ? ' aberto' : '') },
       el('div', { class: 'fixo-linha' }, abrir, el('code', { class: 'cmd' }, f.texto.split('\n')[0]), botao),
-      ab ? el('div', { class: 'fixo-corpo' }, el('p', {}, f.descricao), blocoPrompt(f)) : null));
+      ab ? el('div', { class: 'fixo-corpo' }, el('p', {}, f.descricao), blocoPrompt(f, null, null, false)) : null));
   }
   caixa.append(el('div', { class: 'fixos-sec vidro g-dev' + (aberto ? ' aberto' : '') }, cab, corpo));
 }

@@ -50,7 +50,7 @@ The skill instructions are in English; Claude replies in your language. Field na
 - A task starts when its dependency is merged **or** has its PR ready and reviewed (that branch is merged into the new worktree).
 - Questions: the orchestrator tries to answer; when unsure, it consults Fable; when neither is sure, the task stops and it asks you. The other tasks go on.
 - Task ready: it asks whether it can merge. No answer in 2 minutes (`mergeWaitSeconds`): the merge waits for the end, together with the others.
-- At the top of the map, the **Orchestrators working** panel shows each running orchestrator: the request, since when, the progress and each task with its status (running, PR ready, merge at the end, question, waiting, merged); when only the merge is left, the card gets a green **Only the merge left** badge.
+- At the top of the map, the **Orchestrators working** panel shows each running orchestrator: the request, since when, the progress and each task with its status (running, PR ready, merge at the end, question, waiting, merged); each card has a badge: **Working** (blue), **Pending** (yellow, waiting for you), **Stalled for X** (red, a question for 24 h or more) or **Only the merge left** (green).
 - To follow from your phone, type `/rc` (Remote Control) in the session. The model cannot turn it on; to have it always on, set `"remoteControlAtStartup": true` in `~/.claude/settings.json`.
 
 ## The map

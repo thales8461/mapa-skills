@@ -48,7 +48,7 @@ Requisitos: [Claude Code](https://claude.com/claude-code), Node.js 18+, git. O `
 - Uma tarefa começa quando a dependência está mesclada **ou** com a PR pronta e revisada (a branch dela entra na worktree nova).
 - Dúvida: o orquestrador tenta resolver; se não tiver certeza, consulta o Fable; se nenhum dos dois tiver certeza, a tarefa para e ele pergunta a você. As outras continuam.
 - Tarefa pronta: ele pergunta se pode mesclar. Sem resposta em 2 minutos (`mergeWaitSeconds`), deixa para mesclar com as outras no fim.
-- No topo do mapa, o painel **Orquestradores trabalhando** mostra cada orquestrador rodando: o pedido, desde quando, o progresso e cada tarefa com a situação (rodando, PR pronta, mesclar no fim, dúvida, esperando, mesclada).
+- No topo do mapa, o painel **Orquestradores trabalhando** mostra cada orquestrador rodando: o pedido, desde quando, o progresso e cada tarefa com a situação (rodando, PR pronta, mesclar no fim, dúvida, esperando, mesclada); quando só falta o merge, o cartão ganha o selo verde **Só falta o merge**.
 - Para acompanhar pelo celular, digite `/rc` (Remote Control) na sessão. O modelo não consegue ligar sozinho; para ligar sempre, use `"remoteControlAtStartup": true` no `~/.claude/settings.json`.
 
 ## O mapa

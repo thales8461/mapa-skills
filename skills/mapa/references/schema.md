@@ -13,7 +13,8 @@ Field names are in Portuguese. The table gives the English meaning.
 | `revisor` | Who runs the final review of a finished topic (default `Codex`). |
 | `caminho` | Absolute path of the map file. It goes into copied prompts so any agent can find the map. |
 | `atualizado` | Date of the last agent edit. Update it on every edit. A trailing `//` comment with a short change log is allowed. |
-| `aprovacoes` | The bell: what waits for the user's approval or answer, `{ id, titulo, detalhe, desde: 'dd/mm hh:mm', tarefa?, link? }`. Agents add and remove items (`sino` skill). |
+| `aprovacoes` | The bell: what waits for the user's approval or answer, `{ id, titulo, detalhe, desde: 'dd/mm hh:mm', tarefa?, link?, tipo? }`. Agents add and remove items (`sino` skill). `tipo: 'resposta'` marks a notice that a subject of a question page was answered (written by `/ler-artifact`): it has an ✕ that hides it only in that browser, and the sidebar shortcut "Question pages" counts the ones not dismissed. |
+| `paginas` | Fixed question pages, `{ nome, url, descricao? }` (`url` must be `https://`). Shown in the collapsible "Question pages" section, opened from the sidebar shortcut, and read by `/ler-artifact`. How to create one and its database: `perguntas.md`. |
 | `orquestradores` | Orchestrators working, shown at the top: `{ id: 'orq-ddmm-hhmm', pedido, desde: 'dd/mm hh:mm', tarefas: [ids], estados: { <id>: 'rodando' \| 'pronta' \| 'fim' \| 'duvida' }, nota }`. Written by the `orquestrador` skill when it starts and removed when it ends. Without an `estados` entry, the task state decides: `feita` = merged, `trabalhando` = running, otherwise waiting. |
 | `fixos` | Loose prompts pinned to the top: `{ titulo, descricao, ia, modelo, esforco, rotulo, texto }`. |
 | `assuntos` | List of topics. |
@@ -43,7 +44,7 @@ One task = one pull request.
 | `trabalhando` | `true` while an agent works on it. Remove when `feita` is set. |
 | `pr` | PR number opened by a non-Claude agent, waiting for review. Remove when `feita` is set. |
 | `fila` | `'dd/mm hh:mm'` while a `/fila` session waits for the dependencies. |
-| `aguarda` | Optional. Artifacts whose answer or approval the task waits for: `[{ nome, url }]` (a question page, a report, a mockup). Shows the badge "Depends on artifact <nome>" with the name as a link that opens in a new tab, and blocks the task like `depende`. Remove the entry when the answer arrives (`sino` skill). |
+| `aguarda` | Optional. Artifacts whose answer or approval the task waits for: `[{ nome, url }]` (a question page, a report, a mockup). Shows the badge "Depends on artifact <nome>" with the name as a link that opens in a new tab, and blocks the task like `depende`. Remove the entry when the answer arrives (`sino` skill; for question pages, `/ler-artifact` does it through the subject's `libera`). |
 | `prompts` | List of prompts (usually one). |
 
 ## Prompt (`prompts[]`)
@@ -58,6 +59,12 @@ One task = one pull request.
 | `tempo` | Optional duration range (`'20–40 min'`). Without it, the page derives it from `gasto`. |
 | `subagentes` | Optional short note on which subagents the prompt uses. Shows a badge. |
 | `texto` | The prompt. A good prompt names the task id, the branch, what to read first, what to do, the tests, and how to finish. |
+
+## Sidebar shortcuts (computed)
+
+- **Orchestrators**: red counter = entries in `orquestradores` (hidden when 0).
+- **Question pages**: red counter = `aprovacoes` items with `tipo: 'resposta'` not dismissed in this browser; opens the "Question pages" section and scrolls to it.
+- **Skills**: no counter; opens the `fixos` section and scrolls to it.
 
 ## Groups (computed)
 

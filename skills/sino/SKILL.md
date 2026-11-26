@@ -28,6 +28,24 @@ Inside `aprovacoes: [ ... ]`, one object per item:
 - `id`: short and unique. If it exists, update `detalhe` and `desde` instead of adding a second one.
 - `titulo`: one line, what the user must decide. `detalhe`: one sentence. `tarefa` and `link`: optional.
 - `desde`: `dd/mm hh:mm`.
+- `tipo`: leave it out for a real wait. `tipo: 'resposta'` is only for the notice that a subject of a question page was answered (see below).
+
+## Questions go to a question page
+When the map has `paginas` (fixed question pages, `references/perguntas.md` of the `mapa` skill), do not publish a new artifact for questions. Add a **subject** to the page of the person who must answer, with `ArtifactData` (`assuntos/<id>` and one `perguntas/<id>` per question, with options and the recommended one), and fill on the subject:
+- `prioridade`: `baixa` (new module with only a study, or less), `media` (can wait, or phase 2), `alta` (needed for the next task, but other work can go first) or `urgente` (development blocked by these pending items);
+- `sino`: the id of the bell item you add for it;
+- `libera`: `[{ tarefa: '<id>', perguntas: ['<question ids>'] }]` for each task that waits for these answers (the task also gets `aguarda` with the page name and url).
+
+Then add the bell item with `link` = the page url. `/ler-artifact` reads the answers, frees the tasks, and swaps the item for the notice below.
+
+## Notice of an answered subject
+`/ler-artifact` replaces the subject's bell item with:
+
+```js
+{ id: 'resp-<subject id>', tipo: 'resposta', titulo: 'Answered: <title> (<page>)', detalhe: 'Answers in memory (<file>). Freed: <tasks>.', desde: '26/11 09:00', link: 'https://...' },
+```
+
+The map shows an ✕ on it that hides it only in that browser, and the "Question pages" shortcut in the sidebar counts the notices not dismissed. Agents remove old notices when cleaning the map.
 
 ## Badge on the task that waits for an artifact
 When the item names a `tarefa` and the wait is for an artifact (question page, report, mockup), also write on that task:

@@ -39,8 +39,15 @@ Edit only the field you own, after re-reading the lines:
 | Final review done | `revisado: '<date>'` on the topic |
 | An `/orquestrador` session starts, changes a task status or ends | its entry in `orquestradores` (the `orquestrador` skill owns it) |
 | Something waits for the user's approval or answer | item in `aprovacoes` (the bell, `sino` skill); remove it when the user answers or its task is `feita` |
+| A subject of a question page is answered | `/ler-artifact` frees the tasks (`aguarda`) and swaps the bell item for a `tipo: 'resposta'` notice |
 
 Update `atualizado` on every change except `fila`.
+
+## Question pages
+Questions for people go to a few fixed **question pages** (one per person or team), not to a new artifact each time. Make each page from `assets/perguntas-template.html`, publish it with the database capability and list it in `DADOS.paginas` (`{ nome, url, descricao }`); the map shows them in the collapsible "Question pages" section. How to create a page, its database and the priorities (`baixa`, `media`, `alta`, `urgente`): `references/perguntas.md`. Asking is the `sino` skill; reading the answers is `/ler-artifact`.
+
+## What can start now
+`mapa.mjs ready` lists the tasks that can start now (not done, not working, no `pr`, `fila` or `aguarda`, topic not paused, every `depende` done) and, apart, those held back only by `aguarda`.
 
 ## Clean
 `mapa.mjs summary` lists topics with their group. Topics with `revisado` leave the map: show the list, confirm with the user, remove them. Record their history where the project keeps it (changelog, progress file), not in the map.

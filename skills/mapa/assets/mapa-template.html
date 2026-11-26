@@ -50,8 +50,15 @@ const DADOS = {
   caminho: '',                // absolute path of this file (goes into the copied prompts)
   atualizado: '2026-01-01',
   // Bell: what waits for the user's approval or answer. Agents add and remove items
-  // ({ id, titulo, detalhe, desde: 'dd/mm hh:mm', tarefa?, link? }); see the sino skill.
+  // ({ id, titulo, detalhe, desde: 'dd/mm hh:mm', tarefa?, link?, tipo? }); see the sino skill.
+  // tipo: 'resposta' = notice that a subject of a question page was answered (written by
+  // /ler-artifact). It has an ✕ that hides it only in this browser (estado.sinoExcluidos) and
+  // feeds the counter of the "Question pages" shortcut in the sidebar.
   aprovacoes: [],
+  // Question pages: fixed artifacts where people answer the questions of the project, one per
+  // person or team ({ nome, url, descricao? }). Shown in the collapsible "Question pages" section
+  // and read by /ler-artifact. Template: skills/mapa/assets/perguntas-template.html.
+  paginas: [],
   // Orchestrators: /orquestrador sessions running now, shown at the top. The skill adds
   // { id: 'orq-ddmm-hhmm', pedido, desde: 'dd/mm hh:mm', tarefas: [ids], estados: { <id>: 'rodando' |
   // 'pronta' | 'fim' | 'duvida' }, nota? } when it starts and removes it when it ends; see the orquestrador skill.
@@ -186,6 +193,19 @@ const DADOS = {
   .pausa-nota { color: var(--aviso); background: var(--aviso-fundo); border-radius: 10px; padding: 6px 12px; font-size: .85rem; margin: 0 0 12px; }
   aside .mini { height: 3px; background: var(--linha); border-radius: 99px; margin-top: 7px; overflow: hidden; }
   aside .mini > div { height: 100%; background: linear-gradient(90deg, var(--neon2), var(--ok)); box-shadow: 0 0 8px var(--neon2); }
+  /* Sidebar shortcuts (orchestrators, question pages, skills) with a red counter. */
+  aside a.atalho { display: flex; align-items: center; gap: 8px; }
+  aside a.atalho .badge { margin-left: auto; min-width: 18px; height: 18px; padding: 0 6px; border-radius: 9px; background: #e5484d; color: #fff; font-size: .7rem; font-weight: 700; display: grid; place-items: center; }
+  aside a.atalho .badge[hidden] { display: none; }
+  /* Question pages: one row per page with an Open link. */
+  .pag-linha .t { font-size: .86rem; font-weight: 600; }
+  .pag-linha .abrir-pag { margin-left: auto; color: var(--neon1); font-size: .8rem; font-weight: 600; text-decoration: none; white-space: nowrap; }
+  .pag-linha .abrir-pag:hover { text-decoration: underline; }
+  /* Bell notice of an answered subject (tipo: 'resposta') with the ✕ that hides it. */
+  .sino-item.resposta { display: grid; grid-template-columns: 1fr auto; gap: 0 8px; }
+  .sino-item.resposta > :not(.sino-x) { grid-column: 1; }
+  .sino-x { grid-column: 2; grid-row: 1 / span 3; align-self: start; width: 26px; height: 26px; border-radius: 8px; border: 1px solid var(--vidro-borda); background: transparent; color: var(--suave); cursor: pointer; font-size: .9rem; line-height: 1; }
+  .sino-x:hover { color: #e5484d; border-color: #e5484d; }
   aside .rotulo { font-size: .7rem; text-transform: uppercase; letter-spacing: .12em; color: var(--suave); padding: 0 12px; margin: 16px 0 8px; font-weight: 600; }
   main { min-width: 0; }
   h1, h2, h3 { font-family: "Space Grotesk", sans-serif; letter-spacing: -.015em; }
@@ -322,7 +342,7 @@ const DADOS = {
   .revisao p { color: var(--suave); margin: 0; }
   .vazio { color: var(--suave); text-align: center; padding: 40px; }
   /* Fixed lines: collapsible section, one row per item with Copy. */
-  #fixos { margin: 0 0 14px; }
+  #fixos, #paginas { margin: 0 0 14px; }
   .fixos-sec { border-radius: 18px; }
   .fixos-sec > .gcab { padding: 12px 16px; }
   .fixos-sec > .gcorpo { padding: 0 14px 8px; }
@@ -394,6 +414,9 @@ const DADOS = {
   <aside class="vidro">
     <div class="marca"><div class="logo" id="logo"></div><b id="marca-nome"></b></div>
     <a href="#inicio" data-t="inicio"></a>
+    <a href="#orquestradores" class="atalho" id="lat-orq-link"><span data-t="latOrq"></span> <span class="badge" id="lat-orq" hidden></span></a>
+    <a href="#paginas" class="atalho" id="lat-pag-link"><span data-t="latPag"></span> <span class="badge" id="lat-pag" hidden></span></a>
+    <a href="#fixos" class="atalho" id="lat-fix-link"><span data-t="latFix"></span></a>
     <div class="rotulo" data-t="assuntos"></div>
     <nav id="lateral"></nav>
   </aside>
@@ -440,6 +463,7 @@ const DADOS = {
     </header>
     <div id="orquestradores"></div>
     <div id="fixos"></div>
+    <div id="paginas"></div>
     <div id="assuntos"></div>
     <footer id="rodape"></footer>
   </main>
@@ -455,7 +479,10 @@ const TEXTOS = {
     animacoes: 'Animações', ligadas: 'Ligadas', desligadas: 'Desligadas', autoAtualizar: 'Atualizar sozinho', desligado: 'Desligado',
     tema: 'Alternar tema claro/escuro', ocultar: 'Ocultar concluídas', livres: 'Só as que posso rodar agora', filtrarIa: 'Filtrar por IA',
     copiar: 'Copiar', copiado: 'Copiado!', marcarColado: 'Marcar colado', colado: '✓ Colado ', coladoDica: 'Marcar que já colei este prompt na IA (fica só neste navegador)', modelo: 'Modelo', esforco: 'Esforço', subagentes: 'Subagentes', usaSub: 'Usa subagentes: ',
-    fixosTitulo: 'Skills e frases prontas', orqTitulo: 'Orquestradores trabalhando', orqDesde: 'desde', orqDe: 'de', orqSigla: 'orquestrador', orqTip: 'Orquestrador: ', orqArraste: 'Arraste para mudar a ordem',
+    fixosTitulo: 'Skills e frases prontas', paginasTitulo: 'Páginas de perguntas', paginaAbrir: 'Abrir',
+    latOrq: 'Orquestradores', latPag: 'Páginas de perguntas', latFix: 'Skills',
+    latOrqTip: (n) => `${n} orquestrador(es) rodando`, latPagTip: (n) => `${n} assunto(s) respondido(s) no sino`,
+    sinoExcluir: 'Excluir este aviso (só neste navegador)', orqTitulo: 'Orquestradores trabalhando', orqDesde: 'desde', orqDe: 'de', orqSigla: 'orquestrador', orqTip: 'Orquestrador: ', orqArraste: 'Arraste para mudar a ordem',
     orqEstados: { rodando: 'Rodando', pronta: 'PR pronta', fim: 'Mesclar no fim', duvida: 'Dúvida', esperando: 'Esperando', feita: 'Mesclada' },
     gasto: 'Gasto', extremo: 'EXTREMAMENTE ALTO', gastoExtremo: 'Gasto estimado: acima de 30% do limite de 5 h',
     gastoTip: (n) => `Gasto estimado: ${n}/10 (cerca de ${n * 3}% do limite de 5 h)`,
@@ -493,7 +520,10 @@ const TEXTOS = {
     animacoes: 'Animations', ligadas: 'On', desligadas: 'Off', autoAtualizar: 'Auto refresh', desligado: 'Off',
     tema: 'Toggle light/dark theme', ocultar: 'Hide finished', livres: 'Only what I can run now', filtrarIa: 'Filter by AI',
     copiar: 'Copy', copiado: 'Copied!', marcarColado: 'Mark pasted', colado: '✓ Pasted ', coladoDica: 'Mark that this prompt was already pasted into the AI (kept only in this browser)', modelo: 'Model', esforco: 'Effort', subagentes: 'Subagents', usaSub: 'Uses subagents: ',
-    fixosTitulo: 'Skills and ready-made lines', orqTitulo: 'Orchestrators working', orqDesde: 'since', orqDe: 'of', orqSigla: 'orchestrator', orqTip: 'Orchestrator: ', orqArraste: 'Drag to change the order',
+    fixosTitulo: 'Skills and ready-made lines', paginasTitulo: 'Question pages', paginaAbrir: 'Open',
+    latOrq: 'Orchestrators', latPag: 'Question pages', latFix: 'Skills',
+    latOrqTip: (n) => `${n} orchestrator(s) running`, latPagTip: (n) => `${n} answered subject(s) in the bell`,
+    sinoExcluir: 'Dismiss this notice (only in this browser)', orqTitulo: 'Orchestrators working', orqDesde: 'since', orqDe: 'of', orqSigla: 'orchestrator', orqTip: 'Orchestrator: ', orqArraste: 'Drag to change the order',
     orqEstados: { rodando: 'Running', pronta: 'PR ready', fim: 'Merge at the end', duvida: 'Question', esperando: 'Waiting', feita: 'Merged' },
     gasto: 'Cost', extremo: 'EXTREMELY HIGH', gastoExtremo: 'Estimated cost: above 30% of the 5-hour limit',
     gastoTip: (n) => `Estimated cost: ${n}/10 (about ${n * 3}% of the 5-hour limit)`,
@@ -551,7 +581,7 @@ const ICONES = {
 const CHAVE = 'mapa:' + PROJETO;
 function ler() { try { return JSON.parse(localStorage.getItem(CHAVE)) || {}; } catch { return {}; } }
 function gravar() { try { localStorage.setItem(CHAVE, JSON.stringify(estado)); } catch {} }
-const estado = Object.assign({ feitas: {}, abertos: {}, grupos: {}, ordem: {}, ordenacao: {}, fixosAberto: false, fixoAberto: {} }, ler());
+const estado = Object.assign({ feitas: {}, abertos: {}, grupos: {}, ordem: {}, ordenacao: {}, fixosAberto: false, fixoAberto: {}, paginasAberto: false, sinoExcluidos: {} }, ler());
 estado.filtros = Object.assign({ ocultar: false, livres: false, ia: '' }, estado.filtros);
 
 const chaveTarefa = (a, t) => a.id + '/' + t.id;
@@ -781,7 +811,11 @@ function ferramentas(g, temVarios) {
 
 // Bell: what waits for the user's approval or answer (DADOS.aprovacoes).
 function desenharSino() {
-  const itens = DADOS.aprovacoes || [];
+  // Notices of answered subjects (tipo: 'resposta') dismissed with the ✕ stay hidden in this browser.
+  const itens = (DADOS.aprovacoes || []).filter((i) => !(i.tipo === 'resposta' && estado.sinoExcluidos[i.id]));
+  const novas = itens.filter((i) => i.tipo === 'resposta').length;
+  const lp = document.getElementById('lat-pag');
+  lp.textContent = String(novas); lp.hidden = !novas; lp.title = novas ? L.latPagTip(novas) : '';
   const btn = document.getElementById('sino-btn');
   const conta = document.getElementById('sino-conta');
   const lista = document.getElementById('sino-lista');
@@ -797,7 +831,11 @@ function desenharSino() {
     if (i.tarefa) meta.append(el('span', {}, i.tarefa));
     if (i.desde) meta.append(el('span', {}, `${L.sinoDesde} ${i.desde}`));
     if (i.link) meta.append(el('a', { href: i.link, target: '_blank', rel: 'noopener' }, L.sinoAbrir));
-    lista.append(el('div', { class: 'sino-item' }, el('b', {}, i.titulo), i.detalhe ? el('p', {}, i.detalhe) : null, meta));
+    if (i.tipo === 'resposta') {
+      const x = el('button', { type: 'button', class: 'sino-x', title: L.sinoExcluir, 'aria-label': L.sinoExcluir }, '✕');
+      x.addEventListener('click', (e) => { e.stopPropagation(); estado.sinoExcluidos[i.id] = true; gravar(); desenharSino(); });
+      lista.append(el('div', { class: 'sino-item resposta' }, el('b', {}, i.titulo), i.detalhe ? el('p', {}, i.detalhe) : null, meta, x));
+    } else lista.append(el('div', { class: 'sino-item' }, el('b', {}, i.titulo), i.detalhe ? el('p', {}, i.detalhe) : null, meta));
   }
 }
 
@@ -827,6 +865,35 @@ function desenharFixos(filtros) {
   caixa.append(el('div', { class: 'fixos-sec vidro g-dev' + (aberto ? ' aberto' : '') }, cab, corpo));
 }
 
+// Question pages (DADOS.paginas): collapsible section like the fixed lines, one row per page.
+function desenharPaginas() {
+  const caixa = document.getElementById('paginas');
+  const itens = DADOS.paginas || [];
+  caixa.replaceChildren();
+  if (!itens.length) return;
+  const aberto = !!estado.paginasAberto;
+  const cab = el('button', { type: 'button', class: 'gcab', 'aria-expanded': String(aberto) },
+    el('span', { html: SETA_GRUPO }), el('span', { class: 'ponto' }), el('span', {}, L.paginasTitulo),
+    el('span', { class: 'qtd', html: `<b>${itens.length}</b>` }));
+  cab.addEventListener('click', () => { estado.paginasAberto = !aberto; gravar(); desenhar(); });
+  const corpo = el('div', { class: 'gcorpo' });
+  for (const p of itens) {
+    const url = typeof p.url === 'string' && /^https:\/\//.test(p.url) ? p.url : null;
+    corpo.append(el('div', { class: 'fixo' }, el('div', { class: 'fixo-linha pag-linha' },
+      el('span', { class: 't' }, p.nome || ''), el('code', { class: 'cmd' }, p.descricao || ''),
+      url ? el('a', { class: 'abrir-pag', href: url, target: '_blank', rel: 'noopener' }, L.paginaAbrir) : null)));
+  }
+  caixa.append(el('div', { class: 'fixos-sec vidro g-dev' + (aberto ? ' aberto' : '') }, cab, corpo));
+}
+// Sidebar shortcuts to the collapsible sections: open the section and scroll to it.
+for (const [id, chave, alvo] of [['lat-pag-link', 'paginasAberto', 'paginas'], ['lat-fix-link', 'fixosAberto', 'fixos']]) {
+  document.getElementById(id).addEventListener('click', (e) => {
+    e.preventDefault();
+    if (!estado[chave]) { estado[chave] = true; gravar(); desenhar(); }
+    document.getElementById(alvo).scrollIntoView({ behavior: 'smooth', block: 'start' });
+  });
+}
+
 // Orchestrators: /orquestrador sessions running now (DADOS.orquestradores, written by the skill).
 const ESTADOS_ORQ = L.orqEstados;
 function acharTarefa(id) {
@@ -848,6 +915,8 @@ function desenharOrquestradores() {
   const lista = (DADOS.orquestradores || []).map((o, i) => [o, i])
     .sort((a, b) => (pos.get(a[0].id) ?? 1e6 + a[1]) - (pos.get(b[0].id) ?? 1e6 + b[1])).map((x) => x[0]);
   caixa.replaceChildren();
+  const lo = document.getElementById('lat-orq');
+  lo.textContent = String(lista.length); lo.hidden = !lista.length; lo.title = lista.length ? L.latOrqTip(lista.length) : '';
   if (!lista.length) return;
   const cartoes = lista.map((o) => {
     const ids = o.tarefas || [];
@@ -929,6 +998,7 @@ function desenhar() {
 
   desenharOrquestradores();
   desenharFixos(filtros);
+  desenharPaginas();
 
   for (const g of GRUPOS) {
     const doGrupo = ordenados(g.id, DADOS.assuntos.filter((a) => grupoDe(a) === g.id));

@@ -192,6 +192,9 @@ function validate() {
         if (p.gasto != null && p.gasto !== 'extremo' && !(Number(p.gasto) >= 1 && Number(p.gasto) <= 10)) problemas.push(`${t.id}: gasto must be 1..10 or 'extremo'`);
       }
       if (t.feita && (t.trabalhando || t.pr || t.fila)) problemas.push(`${t.id}: feita together with trabalhando/pr/fila`);
+      if (t.aguarda != null && !Array.isArray(t.aguarda)) problemas.push(`${t.id}: aguarda must be a list of { nome, url }`);
+      for (const x of Array.isArray(t.aguarda) ? t.aguarda : []) if (!x || !x.nome || !x.url) problemas.push(`${t.id}: aguarda item without nome or url`);
+      if (t.feita && t.aguarda?.length) avisos.push(`${t.id}: feita with aguarda (remove it)`);
     }
   }
   // bell

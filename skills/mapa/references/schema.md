@@ -43,6 +43,7 @@ One task = one pull request.
 | `trabalhando` | `true` while an agent works on it. Remove when `feita` is set. |
 | `pr` | PR number opened by a non-Claude agent, waiting for review. Remove when `feita` is set. |
 | `fila` | `'dd/mm hh:mm'` while a `/fila` session waits for the dependencies. |
+| `aguarda` | Optional. Artifacts whose answer or approval the task waits for: `[{ nome, url }]` (a question page, a report, a mockup). Shows the badge "Depends on artifact <nome>" with the name as a link that opens in a new tab, and blocks the task like `depende`. Remove the entry when the answer arrives (`sino` skill). |
 | `prompts` | List of prompts (usually one). |
 
 ## Prompt (`prompts[]`)
